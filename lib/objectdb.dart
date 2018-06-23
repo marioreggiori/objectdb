@@ -106,7 +106,7 @@ class ObjectDB {
   }
 
   _find(query) async {
-    return new Future.sync((() => this._data.where(this._query(query))));
+    return new Future.sync((() => this._data.where(this._query(query)).toList()));
   }
 
   find(Map<String, dynamic> query) {

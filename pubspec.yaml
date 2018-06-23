@@ -1,8 +1,8 @@
 name: objectdb
-description: A new flutter package project.
+description: Flutter NoSQL Database
 version: 0.0.1
-author:
-homepage:
+author: Team netz.chat <dev@netz.chat>
+homepage: https://github.com/netz-chat/objectdb
 
 dependencies:
   flutter:

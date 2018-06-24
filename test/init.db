@@ -498,3 +498,4 @@
 {"name":{"first":"Jovanny","last":"Stiedemann"},"email":"Santa8@hotmail.com","state":"Utah","age":39,"active":true}
 {"name":{"first":"Sheridan","last":"Johnson"},"email":"Lizeth_Trantow84@yahoo.com","state":"Massachusetts","age":41,"active":false}
 {"name":{"first":"Jamarcus","last":"Watsica"},"email":"Monserrat.Bosco@gmail.com","state":"Oklahoma","age":57,"active":false}
+-{"Op.gte":{"age":70}}

@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:execution_queue/execution_queue.dart';
 
+/// Query operators
 enum Op {
   and,
   or,
@@ -20,6 +21,7 @@ enum Op {
   notInArray
 }
 
+/// Database class
 class ObjectDB {
   final String path;
   File _file;
@@ -37,7 +39,8 @@ class ObjectDB {
     });
   }
 
-  Future<ObjectDB> open([bool clean = true]) async {
+  /// Opens flat file database
+  Future open([bool clean = true]) async {
     var reader = this._file.openRead();
     this._data = [];
     await reader
@@ -138,11 +141,11 @@ class ObjectDB {
             }
           case Op.lt:
             {
-              return testVal > query[i];
+              return testVal < query[i];
             }
           case Op.lte:
             {
-              return testVal >= query[i];
+              return testVal <= query[i];
             }
           case Op.ne:
             {
@@ -190,16 +193,19 @@ class ObjectDB {
     }
   }
 
+  /// Find data in cached database object
   Future _find(query) async {
     return new Future.sync(
         (() => this._data.where(this._match(query)).toList()));
   }
 
+  /// Insert [data] update cache object and write change to file
   void _insert(data) {
     this._insertData(data);
     this._writer.writeln('+' + json.encode(data));
   }
 
+  /// Replace operator string to corresponding enum
   Map _decode(Map query) {
     Map prepared = Map();
     for (var i in query.keys) {
@@ -216,6 +222,7 @@ class ObjectDB {
     return prepared;
   }
 
+  /// Replace operator enum to corresponding string
   Map _encode(Map query) {
     Map prepared = Map();
     for (var i in query.keys) {

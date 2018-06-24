@@ -2,38 +2,41 @@ import 'package:test/test.dart';
 import 'dart:io';
 import 'package:objectdb/objectdb.dart';
 
-void main() {
-  test('store objects in flatfile db', () async {
-    final path = Directory.current.path + '/test/test.db';
-    final file = File(path);
-    // reset database
-    file.writeAsStringSync("");
+void main() async {
+  // init test.db
+  File file;
+  final path = Directory.current.path + '/test/';
+  file = File(path + 'test.db');
+  if (file.existsSync()) {
+    file.deleteSync();
+  }
+  file = File(path + 'init.db');
+  file.copySync(path + 'test.db');
 
-    final db = await ObjectDB(path: path).open(false);
+  test('initialize database', () async {
+    var db = ObjectDB(path: path + 'test.db');
+    await db.open();
 
-    await db.insert({"a": 1, "b": 2, "c": 3});
-    await db.insert({"a": 4, "b": 5, "c": 6});
-    await db.insert({"a": 7, "b": 8, "c": 9});
-    await db.insert({"a": 1, "b": 2, "c": 3});
-    await db.insert({"a": 4, "b": 5, "c": 6});
-    await db.insert({
-      "a": 7,
-      "b": 8,
-      "c": {"o": 4}
-    });
-
-    await db.update({"a": 4}, {"c": "tada"});
-    await db.remove({"b": 2});
-
-    await db.clean();
-
-    var result = await db.find({"c.o": 4});
-
-    print(result);
+    expect((await db.find({})).length, 426);
 
     await db.close();
-
-    /*expect(result[0]['c'], 'tada');
-    expect(result[1]['b'], 8);*/
   });
+
+  test('crud', () async {
+    var db = ObjectDB(path: path + 'test.db');
+    await db.open();
+
+    var res = await db.find({
+      Op.lt: {"age": 20},
+      "active": true,
+    });
+
+    for (var doc in res) {
+      expect((doc['age'] < 20 && doc['active'] == true), true);
+    }
+
+    await db.close();
+  });
+
+  test('operators', () async {});
 }

@@ -180,13 +180,9 @@ class ObjectDB {
 
   void _updateData(
       Map<dynamic, dynamic> query, Map<String, dynamic> changes, bool replace) {
-    outer:
+    var matcher = this._match(query);
     for (var i = 0; i < this._data.length; i++) {
-      for (var o in query.keys) {
-        if (query[o] != this._data[i][o]) {
-          continue outer;
-        }
-      }
+      if (!matcher(this._data[i])) continue;
       for (var o in changes.keys) {
         this._data[i][o] = changes[o];
       }

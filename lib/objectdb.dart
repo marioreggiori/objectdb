@@ -26,8 +26,15 @@ class ObjectDB {
   IOSink _writer;
   List<Map<String, dynamic>> _data;
   ExecutionQueue _executionQueue = new ExecutionQueue();
+
+  Map<String, Op> _operatorMap = Map();
+
   ObjectDB({this.path}) {
     this._file = new File(this.path);
+
+    Op.values.forEach((Op op) {
+      _operatorMap[op.toString()] = op;
+    });
   }
 
   Future<ObjectDB> open([bool clean = true]) async {
@@ -65,13 +72,13 @@ class ObjectDB {
         }
       case '-':
         {
-          this._removeData(json.decode(line.substring(1)));
+          this._removeData(this._decode(json.decode(line.substring(1))));
           break;
         }
       case '~':
         {
           var u = json.decode(line.substring(1));
-          this._updateData(u['q'], u['c'], u['r']);
+          this._updateData(this._decode(u['q']), u['c'], u['r']);
           break;
         }
       case '{':
@@ -164,12 +171,12 @@ class ObjectDB {
     this._data.add(data);
   }
 
-  void _removeData(Map<String, dynamic> query) {
+  void _removeData(Map<dynamic, dynamic> query) {
     this._data.removeWhere(this._match(query));
   }
 
   void _updateData(
-      Map<String, dynamic> query, Map<String, dynamic> changes, bool replace) {
+      Map<dynamic, dynamic> query, Map<String, dynamic> changes, bool replace) {
     outer:
     for (var i = 0; i < this._data.length; i++) {
       for (var o in query.keys) {
@@ -193,16 +200,47 @@ class ObjectDB {
     this._writer.writeln('+' + json.encode(data));
   }
 
-  void _remove(query) {
+  Map _decode(Map query) {
+    Map prepared = Map();
+    for (var i in query.keys) {
+      dynamic key = i;
+      if (this._operatorMap.containsKey(key)) {
+        key = this._operatorMap[key];
+      }
+      if (query[i] is Map) {
+        prepared[key] = this._decode(query[i]);
+      } else {
+        prepared[key] = query[i];
+      }
+    }
+    return prepared;
+  }
+
+  Map _encode(Map query) {
+    Map prepared = Map();
+    for (var i in query.keys) {
+      dynamic key = i;
+      if (key is Op) {
+        key = key.toString();
+      }
+      if (query[i] is Map) {
+        prepared[key] = this._encode(query[i]);
+      } else {
+        prepared[key] = query[i];
+      }
+    }
+    return prepared;
+  }
+
+  void _remove(Map query) {
     this._removeData(query);
-    this._writer.writeln('-' + json.encode(query));
+    this._writer.writeln('-' + json.encode(this._encode(query)));
   }
 
   void _update(query, changes, replace) {
     this._updateData(query, changes, replace);
-    this
-        ._writer
-        .writeln('~' + json.encode({"q": query, "c": changes, "r": replace}));
+    this._writer.writeln('~' +
+        json.encode({"q": this._encode(query), "c": changes, "r": replace}));
   }
 
   /**

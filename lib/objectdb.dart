@@ -29,7 +29,7 @@ class ObjectDB {
     return this;
   }
 
-  _clean() async {
+  Future<ObjectDB> _clean() async {
     await this._writer.close();
     await this._file.rename(this.path + '.bak');
     this._file = new File(this.path);
@@ -41,7 +41,7 @@ class ObjectDB {
     return await this.open(false);
   }
 
-  _fromFile(String line) {
+  void _fromFile(String line) {
     switch (line[0]) {
       case '+':
         {
@@ -67,7 +67,7 @@ class ObjectDB {
     }
   }
 
-  _query(query) {
+  Function _match(query) {
     return (Map<String, dynamic> test) {
       for (var i in query.keys) {
         if (test[i] != query[i]) {
@@ -78,15 +78,15 @@ class ObjectDB {
     };
   }
 
-  _insertData(data) {
+  void _insertData(data) {
     this._data.add(data);
   }
 
-  _removeData(Map<String, dynamic> query) {
-    this._data.removeWhere(this._query(query));
+  void _removeData(Map<String, dynamic> query) {
+    this._data.removeWhere(this._match(query));
   }
 
-  _updateData(
+  void _updateData(
       Map<String, dynamic> query, Map<String, dynamic> changes, bool replace) {
     outer:
     for (var i = 0; i < this._data.length; i++) {
@@ -101,22 +101,22 @@ class ObjectDB {
     }
   }
 
-  _find(query) async {
+  Future<List<Map<String, dynamic>>> _find(query) async {
     return new Future.sync(
-        (() => this._data.where(this._query(query)).toList()));
+        (() => this._data.where(this._match(query)).toList()));
   }
 
-  _insert(data) {
+  void _insert(data) {
     this._insertData(data);
     this._writer.writeln('+' + json.encode(data));
   }
 
-  _remove(query) {
+  void _remove(query) {
     this._removeData(query);
     this._writer.writeln('-' + json.encode(query));
   }
 
-  _update(query, changes, replace) {
+  void _update(query, changes, replace) {
     this._updateData(query, changes, replace);
     this
         ._writer
@@ -126,28 +126,28 @@ class ObjectDB {
   /**
    * get all documents that match [query]
    */
-  find(Map<String, dynamic> query) {
+  Future<List<Map<String, dynamic>>> find(Map<String, dynamic> query) {
     return this._executionQueue.add(() => this._find(query));
   }
 
   /**
    * insert document
    */
-  insert(Map<String, dynamic> doc) async {
+  Future insert(Map<String, dynamic> doc) async {
     return this._executionQueue.add(() => this._insert(doc));
   }
 
   /**
    * remove documents that match [query]
    */
-  remove(query) async {
+  Future remove(query) async {
     return this._executionQueue.add(() => this._remove(query));
   }
 
   /**
    * update database, takes [query], [changes] and an optional [replace] flag
    */
-  update(Map<String, dynamic> query, Map<String, dynamic> changes,
+  Future update(Map<String, dynamic> query, Map<String, dynamic> changes,
       [bool replace = false]) async {
     return this
         ._executionQueue
@@ -157,7 +157,11 @@ class ObjectDB {
   /**
    * reformat db file
    */
-  Future clean() async {
+  Future<ObjectDB> clean() async {
     return this._executionQueue.add(() => this._clean());
+  }
+
+  Future close() async {
+    return this._executionQueue.add(() {});
   }
 }

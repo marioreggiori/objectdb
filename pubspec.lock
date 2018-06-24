@@ -69,7 +69,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: a2f65000469489740d204538278c4e8897dda68e
+      resolved-ref: "7fe899aacb23114c0b11064cb818787ba2deeadf"
       url: "git://github.com/netz-chat/execution_queue.git"
     source: git
     version: "0.0.1"

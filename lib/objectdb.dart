@@ -5,6 +5,21 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:execution_queue/execution_queue.dart';
 
+enum Operator {
+  and,
+  or,
+  not,
+
+  lt,
+  gt,
+  lte,
+  gte,
+  ne,
+
+  inArray,
+  notInArray
+}
+
 class ObjectDB {
   final String path;
   File _file;
@@ -33,7 +48,7 @@ class ObjectDB {
     await this._writer.close();
     await this._file.rename(this.path + '.bak');
     this._file = new File(this.path);
-    var writer = this._file.openWrite();
+    IOSink writer = this._file.openWrite();
     writer.writeAll(this._data.map((data) => json.encode(data)), '\n');
     writer.write('\n');
     await writer.flush();
@@ -67,15 +82,78 @@ class ObjectDB {
     }
   }
 
-  Function _match(query) {
-    return (Map<String, dynamic> test) {
-      for (var i in query.keys) {
-        if (test[i] != query[i]) {
-          return false;
+  Function _match(query, [Operator op = Operator.and]) {
+    bool match(Map<dynamic, dynamic> test) {
+      for (dynamic i in query.keys) {
+        if (i is Operator) {
+          bool match = this._match(query[i], i)(test);
+
+          if (op == Operator.and && match) continue;
+          if (op == Operator.and && !match) return false;
+
+          return Operator.not == op ? !match : match;
+        }
+        var keyPath = i.split('.');
+        dynamic testVal = test;
+        for (dynamic o in keyPath) {
+          if (!(testVal is Map<dynamic, dynamic>) || !testVal.containsKey(o)) {
+            if (op == Operator.and)
+              return false;
+            else
+              continue;
+          }
+          testVal = testVal[o];
+        }
+
+        switch (op) {
+          case Operator.and:
+          case Operator.not:
+            {
+              if (testVal != query[i]) return false;
+              break;
+            }
+          case Operator.or:
+            {
+              if (testVal == query[i]) return true;
+              break;
+            }
+          case Operator.gt:
+            {
+              return testVal > query[i];
+            }
+          case Operator.gte:
+            {
+              return testVal >= query[i];
+            }
+          case Operator.lt:
+            {
+              return testVal > query[i];
+            }
+          case Operator.lte:
+            {
+              return testVal >= query[i];
+            }
+          case Operator.ne:
+            {
+              return testVal != query[i];
+            }
+          case Operator.inArray:
+            {
+              return (query[i] is List) && query[i].contains(testVal);
+            }
+          case Operator.notInArray:
+            {
+              return (query[i] is List) && !query[i].contains(testVal);
+            }
+          default:
+            {}
         }
       }
-      return true;
-    };
+
+      return op == Operator.or ? false : true;
+    }
+
+    return match;
   }
 
   void _insertData(data) {
@@ -101,7 +179,7 @@ class ObjectDB {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _find(query) async {
+  Future _find(query) async {
     return new Future.sync(
         (() => this._data.where(this._match(query)).toList()));
   }
@@ -126,7 +204,7 @@ class ObjectDB {
   /**
    * get all documents that match [query]
    */
-  Future<List<Map<String, dynamic>>> find(Map<String, dynamic> query) {
+  Future find(Map<dynamic, dynamic> query) {
     return this._executionQueue.add(() => this._find(query));
   }
 
@@ -157,11 +235,13 @@ class ObjectDB {
   /**
    * reformat db file
    */
-  Future<ObjectDB> clean() async {
+  Future clean() async {
     return this._executionQueue.add(() => this._clean());
   }
 
   Future close() async {
-    return this._executionQueue.add(() {});
+    return this._executionQueue.add(() async {
+      await this._writer.close();
+    });
   }
 }

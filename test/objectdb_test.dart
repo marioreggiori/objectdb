@@ -6,6 +6,7 @@ void main() {
   test('store objects in flatfile db', () async {
     final path = Directory.current.path + '/test/test.db';
     final file = File(path);
+    // reset database
     file.writeAsStringSync("");
 
     final db = await ObjectDB(path: path).open(false);

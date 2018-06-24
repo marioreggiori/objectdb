@@ -19,14 +19,52 @@ class ObjectDB {
     var reader = this._file.openRead();
     this._data = [];
     await reader
-        .transform(UTF8.decoder)
+        .transform(utf8.decoder)
         .transform(new LineSplitter())
         .forEach((line) => this._fromFile(line));
-    this._writer = this._file.openWrite(mode: FileMode.WRITE_ONLY_APPEND);
+    this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
     if (clean) {
       return this.clean();
     }
     return this;
+  }
+
+  _clean() async {
+    await this._writer.close();
+    await this._file.rename(this.path + '.bak');
+    this._file = new File(this.path);
+    var writer = this._file.openWrite();
+    writer.writeAll(this._data.map((data) => json.encode(data)), '\n');
+    writer.write('\n');
+    await writer.flush();
+    await writer.close();
+    return await this.open(false);
+  }
+
+  _fromFile(String line) {
+    switch (line[0]) {
+      case '+':
+        {
+          this._insertData(json.decode(line.substring(1)));
+          break;
+        }
+      case '-':
+        {
+          this._removeData(json.decode(line.substring(1)));
+          break;
+        }
+      case '~':
+        {
+          var u = json.decode(line.substring(1));
+          this._updateData(u['q'], u['c'], u['r']);
+          break;
+        }
+      case '{':
+        {
+          this._insertData(json.decode(line));
+          break;
+        }
+    }
   }
 
   _query(query) {
@@ -38,6 +76,10 @@ class ObjectDB {
       }
       return true;
     };
+  }
+
+  _insertData(data) {
+    this._data.add(data);
   }
 
   _removeData(Map<String, dynamic> query) {
@@ -59,64 +101,52 @@ class ObjectDB {
     }
   }
 
-  _addData(data) {
-    this._data.add(data);
+  _find(query) async {
+    return new Future.sync(
+        (() => this._data.where(this._query(query)).toList()));
   }
 
-  _fromFile(String line) {
-    switch (line[0]) {
-      case '+':
-        {
-          this._addData(JSON.decode(line.substring(1)));
-          break;
-        }
-      case '-':
-        {
-          this._removeData(JSON.decode(line.substring(1)));
-          break;
-        }
-      case '~':
-        {
-          var u = JSON.decode(line.substring(1));
-          this._updateData(u['q'], u['c'], u['r']);
-          break;
-        }
-      default:
-        {
-          this._addData(JSON.decode(line));
-        }
-    }
-  }
-
-  _add(data) {
-    this._addData(data);
-    this._writer.writeln('+' + JSON.encode(data));
+  _insert(data) {
+    this._insertData(data);
+    this._writer.writeln('+' + json.encode(data));
   }
 
   _remove(query) {
     this._removeData(query);
-    this._writer.writeln('-' + JSON.encode(query));
+    this._writer.writeln('-' + json.encode(query));
   }
 
   _update(query, changes, replace) {
     this._updateData(query, changes, replace);
     this
         ._writer
-        .writeln('~' + JSON.encode({"q": query, "c": changes, "r": replace}));
+        .writeln('~' + json.encode({"q": query, "c": changes, "r": replace}));
   }
 
-  _find(query) async {
-    return new Future.sync((() => this._data.where(this._query(query)).toList()));
-  }
-
+  /**
+   * get all documents that match [query]
+   */
   find(Map<String, dynamic> query) {
     return this._executionQueue.add(() => this._find(query));
   }
 
+  /**
+   * insert document
+   */
   insert(Map<String, dynamic> doc) async {
-    return this._executionQueue.add(() => this._add(doc));
+    return this._executionQueue.add(() => this._insert(doc));
   }
 
+  /**
+   * remove documents that match [query]
+   */
+  remove(query) async {
+    return this._executionQueue.add(() => this._remove(query));
+  }
+
+  /**
+   * update database, takes [query], [changes] and an optional [replace] flag
+   */
   update(Map<String, dynamic> query, Map<String, dynamic> changes,
       [bool replace = false]) async {
     return this
@@ -124,22 +154,9 @@ class ObjectDB {
         .add(() => this._update(query, changes, replace));
   }
 
-  remove(query) async {
-    return this._executionQueue.add(() => this._remove(query));
-  }
-
-  _clean() async {
-    await this._writer.close();
-    await this._file.rename(this.path + '.bak');
-    this._file = new File(this.path);
-    var writer = this._file.openWrite();
-    writer.writeAll(this._data.map((data) => JSON.encode(data)), '\n');
-    writer.write('\n');
-    await writer.flush();
-    await writer.close();
-    return await this.open(false);
-  }
-
+  /**
+   * reformat db file
+   */
   Future clean() async {
     return this._executionQueue.add(() => this._clean());
   }

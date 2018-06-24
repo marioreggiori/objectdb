@@ -84,12 +84,16 @@ class ObjectDB {
 
   Function _match(query, [Op op = Op.and]) {
     bool match(Map<dynamic, dynamic> test) {
+      keyloop:
       for (dynamic i in query.keys) {
         if (i is Op) {
           bool match = this._match(query[i], i)(test);
 
           if (op == Op.and && match) continue;
           if (op == Op.and && !match) return false;
+
+          if (op == Op.or && !match) continue;
+          if (op == Op.or && match) return true;
 
           return Op.not == op ? !match : match;
         }
@@ -100,7 +104,7 @@ class ObjectDB {
             if (op == Op.and)
               return false;
             else
-              continue;
+              continue keyloop;
           }
           testVal = testVal[o];
         }

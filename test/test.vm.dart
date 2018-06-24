@@ -20,12 +20,14 @@ void run() async {
       },
       "active": true,
     },
-    Op.lt: {"age": 50}
+    Op.gt: {"age": 70}
   });
 
   for (var i in result) {
     print(i);
   }
+
+  print(result.length);
 
   await db.close();
 }

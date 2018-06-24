@@ -5,7 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:execution_queue/execution_queue.dart';
 
-enum Operator {
+enum Op {
   and,
   or,
   not,
@@ -82,22 +82,22 @@ class ObjectDB {
     }
   }
 
-  Function _match(query, [Operator op = Operator.and]) {
+  Function _match(query, [Op op = Op.and]) {
     bool match(Map<dynamic, dynamic> test) {
       for (dynamic i in query.keys) {
-        if (i is Operator) {
+        if (i is Op) {
           bool match = this._match(query[i], i)(test);
 
-          if (op == Operator.and && match) continue;
-          if (op == Operator.and && !match) return false;
+          if (op == Op.and && match) continue;
+          if (op == Op.and && !match) return false;
 
-          return Operator.not == op ? !match : match;
+          return Op.not == op ? !match : match;
         }
         var keyPath = i.split('.');
         dynamic testVal = test;
         for (dynamic o in keyPath) {
           if (!(testVal is Map<dynamic, dynamic>) || !testVal.containsKey(o)) {
-            if (op == Operator.and)
+            if (op == Op.and)
               return false;
             else
               continue;
@@ -106,42 +106,42 @@ class ObjectDB {
         }
 
         switch (op) {
-          case Operator.and:
-          case Operator.not:
+          case Op.and:
+          case Op.not:
             {
               if (testVal != query[i]) return false;
               break;
             }
-          case Operator.or:
+          case Op.or:
             {
               if (testVal == query[i]) return true;
               break;
             }
-          case Operator.gt:
+          case Op.gt:
             {
               return testVal > query[i];
             }
-          case Operator.gte:
+          case Op.gte:
             {
               return testVal >= query[i];
             }
-          case Operator.lt:
+          case Op.lt:
             {
               return testVal > query[i];
             }
-          case Operator.lte:
+          case Op.lte:
             {
               return testVal >= query[i];
             }
-          case Operator.ne:
+          case Op.ne:
             {
               return testVal != query[i];
             }
-          case Operator.inArray:
+          case Op.inArray:
             {
               return (query[i] is List) && query[i].contains(testVal);
             }
-          case Operator.notInArray:
+          case Op.notInArray:
             {
               return (query[i] is List) && !query[i].contains(testVal);
             }
@@ -150,7 +150,7 @@ class ObjectDB {
         }
       }
 
-      return op == Operator.or ? false : true;
+      return op == Op.or ? false : true;
     }
 
     return match;

@@ -10,3 +10,6 @@ ios/Flutter/Generated.xcconfig
 ios/Runner/GeneratedPluginRegistrant.*
 
 .idea/libraries/Dart_SDK.xml
+
+test/test.db
+test/test.db.bak

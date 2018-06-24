@@ -14,10 +14,13 @@ void run() async {
   final db = await ObjectDB(path: path + 'test.db').open(false);
 
   var result = await db.find({
-    Operator.inArray: {
-      "state": ['NewYork', 'Nebraska']
+    Op.or: {
+      Op.inArray: {
+        "state": ['Alaska', 'Nebraska']
+      },
+      "active": true,
     },
-    "active": true,
+    Op.lt: {"age": 50}
   });
 
   for (var i in result) {

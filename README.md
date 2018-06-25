@@ -32,14 +32,14 @@ await db.clean();
 
 ## Operators
 ### Logical
-- and
-- or
-- not
+- `and` (default operator on first level)
+- `or`
+- `not`
 
 ### Comparison
-- lt, lte
-- gt, gte
-- inList, notInList
+- `lt`, `lte`: less than, less than or equal
+- `gt`, `gte`: greater than, greater than or equal
+- `inList`, `notInList`: value in list, value not in list
 
 ### Examples
 ```dart

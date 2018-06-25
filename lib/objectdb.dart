@@ -41,16 +41,21 @@ class ObjectDB {
 
   /// Opens flat file database
   Future open([bool clean = true]) async {
+    if (!this._file.existsSync()) {
+      this._file.createSync();
+    }
     var reader = this._file.openRead();
     this._data = [];
     await reader
         .transform(utf8.decoder)
         .transform(new LineSplitter())
         .forEach((line) {
-      try {
-        this._fromFile(line);
-      } catch (e) {
-        print(e.toString());
+      if (line != '') {
+        try {
+          this._fromFile(line);
+        } catch (e) {
+          print(e.toString());
+        }
       }
     });
     this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
@@ -125,7 +130,9 @@ class ObjectDB {
           testVal = testVal[o];
         }
 
-        if (op != Op.inList && op != Op.notInList &&testVal.runtimeType != query[i].runtimeType) continue;
+        if (op != Op.inList &&
+            op != Op.notInList &&
+            testVal.runtimeType != query[i].runtimeType) continue;
 
         switch (op) {
           case Op.and:

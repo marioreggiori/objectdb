@@ -287,14 +287,14 @@ class ObjectDB {
   /**
    * insert document
    */
-  Future insert(Map<String, dynamic> doc) async {
+  Future insert(Map<String, dynamic> doc) {
     return this._executionQueue.add(() => this._insert(doc));
   }
 
   /**
    * remove documents that match [query]
    */
-  Future remove(query) async {
+  Future remove(query) {
     return this._executionQueue.add(() => this._remove(query));
   }
 
@@ -302,7 +302,7 @@ class ObjectDB {
    * update database, takes [query], [changes] and an optional [replace] flag
    */
   Future update(Map<dynamic, dynamic> query, Map<String, dynamic> changes,
-      [bool replace = false]) async {
+      [bool replace = false]) {
     return this
         ._executionQueue
         .add(() => this._update(query, changes, replace));
@@ -311,11 +311,11 @@ class ObjectDB {
   /**
    * reformat db file
    */
-  Future clean() async {
+  Future clean() {
     return this._executionQueue.add(() => this._clean());
   }
 
-  Future close() async {
+  Future close() {
     return this._executionQueue.add(() async {
       await this._writer.close();
     });

@@ -31,8 +31,8 @@ void main() async {
   test('query 1', () async {
     var testKeys = [];
     var test = await db.find({
-      Op.lt: {"age": 20},
-      "active": true,
+      Op.lt: {'age': 20},
+      'active': true,
     });
 
     var count = 0;
@@ -58,12 +58,12 @@ void main() async {
     var testKeys = [];
     var test = await db.find({
       Op.or: {
-        Op.lt: {"age": 20},
+        Op.lt: {'age': 20},
         Op.inList: {
-          "state": ['Florida', 'Virginia', 'New Jersey']
+          'state': ['Florida', 'Virginia', 'New Jersey']
         },
       },
-      "active": true,
+      'active': true,
     });
 
     var count = 0;

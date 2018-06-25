@@ -271,7 +271,7 @@ class ObjectDB {
   void _update(query, changes, replace) {
     this._updateData(query, changes, replace);
     this._writer.writeln('~' +
-        json.encode({"q": this._encode(query), "c": changes, "r": replace}));
+        json.encode({'q': this._encode(query), 'c': changes, 'r': replace}));
   }
 
   /**

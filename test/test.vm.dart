@@ -24,6 +24,8 @@ void run() async {
   db.insert({"a": "8"});
   db.insert({"a": "9"});
 
+  db.update({Op.gt:{"a":"0"}}, {"b":"c"});
+
   print(await db.find({
     Op.gt: {"a": 0},
   }));

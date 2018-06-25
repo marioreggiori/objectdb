@@ -302,7 +302,7 @@ class ObjectDB {
   /**
    * update database, takes [query], [changes] and an optional [replace] flag
    */
-  Future update(Map<String, dynamic> query, Map<String, dynamic> changes,
+  Future update(Map<dynamic, dynamic> query, Map<String, dynamic> changes,
       [bool replace = false]) async {
     return this
         ._executionQueue

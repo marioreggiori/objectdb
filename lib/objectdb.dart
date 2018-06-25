@@ -125,7 +125,7 @@ class ObjectDB {
           testVal = testVal[o];
         }
 
-        if (testVal.runtimeType != query[i].runtimeType) continue;
+        if (op != Op.inList && op != Op.notInList &&testVal.runtimeType != query[i].runtimeType) continue;
 
         switch (op) {
           case Op.and:

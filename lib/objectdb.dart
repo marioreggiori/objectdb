@@ -150,37 +150,29 @@ class ObjectDB {
             {
               if (testVal is String) {
                 return testVal.compareTo(query[i]) > 0;
-              } else {
-                return testVal > query[i];
               }
-              break;
+              return testVal > query[i];
             }
           case Op.gte:
             {
               if (testVal is String) {
                 return testVal.compareTo(query[i]) >= 0;
-              } else {
-                return testVal >= query[i];
               }
-              break;
+              return testVal >= query[i];
             }
           case Op.lt:
             {
               if (testVal is String) {
                 return testVal.compareTo(query[i]) < 0;
-              } else {
-                return testVal < query[i];
               }
-              break;
+              return testVal < query[i];
             }
           case Op.lte:
             {
               if (testVal is String) {
                 return testVal.compareTo(query[i]) <= 0;
-              } else {
-                return testVal <= query[i];
               }
-              break;
+              return testVal <= query[i];
             }
           case Op.ne:
             {

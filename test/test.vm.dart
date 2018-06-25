@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:objectdb/objectdb.dart';
 
 void run() async {
-  File file;
   final path = Directory.current.path + '/test/';
   /*file = File(path + 'test.db');
   if (file.existsSync()) {

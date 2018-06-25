@@ -11,7 +11,22 @@ void run() async {
   file = File(path + 'init.db');
   file.copySync(path + 'test.db');
 
-  final db = await ObjectDB(path: path + 'test.db').open(false);
+  final db = ObjectDB(path: path + 'test.db');
+  await db.open();
+
+  db.insert({"a": "1"});
+  db.insert({"a": "2"});
+  db.insert({"a": "3"});
+  db.insert({"a": "4"});
+  db.insert({"a": "5"});
+  db.insert({"a": "6"});
+  db.insert({"a": "7"});
+  db.insert({"a": "8"});
+  db.insert({"a": "9"});
+
+  print(await db.find({
+    Op.gt: {"a": 0},
+  }));
 
   await db.close();
 }

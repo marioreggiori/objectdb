@@ -46,7 +46,13 @@ class ObjectDB {
     await reader
         .transform(utf8.decoder)
         .transform(new LineSplitter())
-        .forEach((line) => this._fromFile(line));
+        .forEach((line) {
+      try {
+        this._fromFile(line);
+      } catch (e) {
+        print(e.toString());
+      }
+    });
     this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
     if (clean) {
       return this.clean();
@@ -111,13 +117,15 @@ class ObjectDB {
         dynamic testVal = test;
         for (dynamic o in keyPath) {
           if (!(testVal is Map<dynamic, dynamic>) || !testVal.containsKey(o)) {
-            if (op == Op.and)
+            if (op != Op.or)
               return false;
             else
               continue keyloop;
           }
           testVal = testVal[o];
         }
+
+        if (testVal.runtimeType != query[i].runtimeType) continue;
 
         switch (op) {
           case Op.and:
@@ -133,19 +141,39 @@ class ObjectDB {
             }
           case Op.gt:
             {
-              return testVal > query[i];
+              if (testVal is String) {
+                return testVal.compareTo(query[i]) > 0;
+              } else {
+                return testVal > query[i];
+              }
+              break;
             }
           case Op.gte:
             {
-              return testVal >= query[i];
+              if (testVal is String) {
+                return testVal.compareTo(query[i]) >= 0;
+              } else {
+                return testVal >= query[i];
+              }
+              break;
             }
           case Op.lt:
             {
-              return testVal < query[i];
+              if (testVal is String) {
+                return testVal.compareTo(query[i]) < 0;
+              } else {
+                return testVal < query[i];
+              }
+              break;
             }
           case Op.lte:
             {
-              return testVal <= query[i];
+              if (testVal is String) {
+                return testVal.compareTo(query[i]) <= 0;
+              } else {
+                return testVal <= query[i];
+              }
+              break;
             }
           case Op.ne:
             {
@@ -250,7 +278,11 @@ class ObjectDB {
    * get all documents that match [query]
    */
   Future find(Map<dynamic, dynamic> query) {
-    return this._executionQueue.add(() => this._find(query));
+    try {
+      return this._executionQueue.add(() => this._find(query));
+    } catch (e) {
+      throw (e);
+    }
   }
 
   /**

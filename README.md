@@ -28,6 +28,9 @@ var result = await db.find({'active': true});
 
 // reformat db file
 await db.clean();
+
+// close db
+await db.close();
 ```
 
 ## Operators

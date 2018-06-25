@@ -17,26 +17,85 @@ void main() async {
     var db = ObjectDB(path: path + 'test.db');
     await db.open();
 
-    expect((await db.find({})).length, 426);
+    expect((await db.find({})).length, 429);
 
     await db.close();
   });
 
-  test('crud', () async {
-    var db = ObjectDB(path: path + 'test.db');
-    await db.open();
+  var db = ObjectDB(path: path + 'test.db');
+  await db.open();
 
-    var res = await db.find({
+  // fetch all documents
+  var all = await db.find({});
+
+  test('query 1', () async {
+    var testKeys = [];
+    var test = await db.find({
       Op.lt: {"age": 20},
       "active": true,
     });
 
-    for (var doc in res) {
+    var count = 0;
+
+    for (var doc in test) {
+      testKeys.add(doc['id']);
       expect((doc['age'] < 20 && doc['active'] == true), true);
+      count++;
     }
 
-    await db.close();
+    print('First query count: $count');
+
+    for (var doc in all) {
+      if (testKeys.contains(doc['id'])) continue;
+      expect((doc['age'] < 20 && doc['active'] == true), false);
+      count++;
+    }
+
+    expect(count, all.length);
+  });
+
+  test('query 2', () async {
+    var testKeys = [];
+    var test = await db.find({
+      Op.or: {
+        Op.lt: {"age": 20},
+        Op.inArray: {
+          "state": ['Florida', 'Virginia', 'New Jersey']
+        },
+      },
+      "active": true,
+    });
+
+    var count = 0;
+
+    for (var doc in test) {
+      testKeys.add(doc['id']);
+      expect(
+          ((doc['age'] < 20 ||
+                  ['Florida', 'Virginia', 'New Jersey']
+                      .contains(doc['state'])) &&
+              doc['active'] == true),
+          true);
+      count++;
+    }
+
+    print('Second query count: $count');
+
+    for (var doc in all) {
+      if (testKeys.contains(doc['id'])) continue;
+      expect(
+          ((doc['age'] < 20 ||
+                  ['Florida', 'Virginia', 'New Jersey']
+                      .contains(doc['state'])) &&
+              doc['active'] == true),
+          false);
+      count++;
+    }
+
+    expect(count, all.length);
   });
 
   test('operators', () async {});
+
+  db.close();
 }

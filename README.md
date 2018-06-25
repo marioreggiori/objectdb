@@ -1,7 +1,6 @@
 # ObjectDB
 
-
-![Pub](https://img.shields.io/pub/v/box2d.svg)
+[![Pub](https://img.shields.io/pub/v/box2d.svg)](https://pub.dartlang.org/packages/objectdb)
 
 Persistent embeded NoSQL database for [Dart](https://www.dartlang.org/) and [Flutter](https://flutter.io/). 100% Dart.
 

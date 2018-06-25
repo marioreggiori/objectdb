@@ -59,7 +59,7 @@ void main() async {
     var test = await db.find({
       Op.or: {
         Op.lt: {"age": 20},
-        Op.inArray: {
+        Op.inList: {
           "state": ['Florida', 'Virginia', 'New Jersey']
         },
       },

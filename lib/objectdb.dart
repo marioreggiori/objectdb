@@ -17,8 +17,8 @@ enum Op {
   gte,
   ne,
 
-  inArray,
-  notInArray
+  inList,
+  notInList
 }
 
 /// Database class
@@ -179,11 +179,11 @@ class ObjectDB {
             {
               return testVal != query[i];
             }
-          case Op.inArray:
+          case Op.inList:
             {
               return (query[i] is List) && query[i].contains(testVal);
             }
-          case Op.notInArray:
+          case Op.notInList:
             {
               return (query[i] is List) && !query[i].contains(testVal);
             }

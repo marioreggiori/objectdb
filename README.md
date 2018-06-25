@@ -39,7 +39,7 @@ await db.clean();
 ### Comparison
 - lt, lte
 - gt, gte
-- inArray, notInArray
+- inList, notInList
 
 ### Examples
 ```dart
@@ -47,7 +47,7 @@ await db.clean();
 var result = db.find({
     "active": true,
     Op.or: {
-        Op.inArray: {"state": ['Florida', 'Virginia', 'New Jersey']},
+        Op.inList: {"state": ['Florida', 'Virginia', 'New Jersey']},
         Op.gte: {"age": 30},
     }
 });

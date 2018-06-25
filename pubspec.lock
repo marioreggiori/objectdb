@@ -67,11 +67,9 @@ packages:
   execution_queue:
     dependency: "direct main"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: "7fe899aacb23114c0b11064cb818787ba2deeadf"
-      url: "git://github.com/netz-chat/execution_queue.git"
-    source: git
+      name: execution_queue
+      url: "https://pub.dartlang.org"
+    source: hosted
     version: "0.0.1"
   flutter:
     dependency: "direct main"

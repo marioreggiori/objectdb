@@ -1,15 +1,16 @@
 name: objectdb
 description: Flutter NoSQL Database
 version: 0.0.1
-author: Team netz.chat <dev@netz.chat>
+author: Team netz.chat <dev@netzchat.com>
 homepage: https://github.com/netz-chat/objectdb
+environment:
+    sdk: '>=2.0.0-dev.1.2 <2.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
-  execution_queue:
-    git: git://github.com/netz-chat/execution_queue.git
+  execution_queue: ^0.0.1
 
 dev_dependencies:
   flutter_test:

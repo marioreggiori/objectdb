@@ -2,7 +2,7 @@
 
 Embeded persistent Flutter NoSQL database. 100% Dart.
 
-**CAUTION** This plugin is still in development. **Use at your own risk**. If you notice any bugs you can [create](https://github.com/netz-chat/objectdb/issues/new 'Create issue') an issue on GitHub. You're also welcome to contribute using [pull requests](https://github.com/netz-chat/objectdb/compare 'Pull request'). New features should be discussed within a GitHub issue first.
+**CAUTION** This plugin is still in development. **Use at your own risk**. If you notice any bugs you can [create](https://github.com/netz-chat/objectdb/issues/new 'Create issue') an issue on GitHub. You're also welcome to contribute using [pull requests](https://github.com/netz-chat/objectdb/compare 'Pull request'). Please open an issue before spending time on any pull request.
 
 
 ## How to use
@@ -55,3 +55,6 @@ var result = db.find({
 // same as
 var match = (result['active'] == true && (['Florida', 'Virginia', 'New Jersey'].contains(result['state']) || result['age'] >= 30));
 ```
+
+## License
+See [License](https://github.com/netz-chat/objectdb/blob/master/LICENSE)

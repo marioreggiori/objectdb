@@ -17,3 +17,7 @@
 ## [0.0.8] - 2018-06-26
 * Added ObjectId as unique _id value
 * Added methods: `insertMany()`, `first()` and `last()`
+
+
+## [0.0.9] - 2018-06-26
+* __BREAKING CHANGE:__ Rename clean() to tidy()

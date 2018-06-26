@@ -29,15 +29,15 @@ db.delete({'active': false});
 var result = await db.find({'active': true});
 
 // reformat db file
-await db.clean();
+await db.tidy();
 
 // close db
 await db.close();
 ```
 
 ## Methods
-- `db.open([bool clean = true])` opens database
-- `db.clean()` 'clean' .db file
+- `db.open([bool tidy = true])` opens database
+- `db.tidy()` 'tidy up' the .db file
 - `db.close()` closes database
 
 ### find

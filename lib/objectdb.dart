@@ -47,7 +47,7 @@ class ObjectDB {
   }
 
   /// Opens flat file database
-  Future open([bool clean = true]) async {
+  Future open([bool tidy = true]) async {
     if (!this._file.existsSync()) {
       this._file.createSync();
     }
@@ -66,13 +66,13 @@ class ObjectDB {
       }
     });
     this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
-    if (clean) {
-      return this.clean();
+    if (tidy) {
+      return this.tidy();
     }
     return this;
   }
 
-  Future<ObjectDB> _clean() async {
+  Future<ObjectDB> _tidy() async {
     await this._writer.close();
     await this._file.rename(this.path + '.bak');
     this._file = File(this.path);
@@ -368,8 +368,8 @@ class ObjectDB {
   /**
    * reformat db file
    */
-  Future clean() {
-    return this._executionQueue.add(() => this._clean());
+  Future tidy() {
+    return this._executionQueue.add(() => this._tidy());
   }
 
   Future close() {

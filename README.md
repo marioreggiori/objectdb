@@ -28,7 +28,7 @@ db.delete({'active': false});
 // search documents in database
 var result = await db.find({'active': true});
 
-// reformat db file
+// 'tidy up' the db file
 await db.tidy();
 
 // close db

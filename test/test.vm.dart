@@ -11,7 +11,7 @@ void run() async {
   file = File(path + 'init.db');
   file.copySync(path + 'test.db');
 
-  final db = ObjectDB(path: path + 'test.db');
+  final db = ObjectDB(path + 'test.db');
   await db.open();
 
   db.insert({'a': '1'});

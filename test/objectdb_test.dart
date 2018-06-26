@@ -14,7 +14,7 @@ void main() async {
   file.copySync(path + 'test.db');
 
   test('initialize database', () async {
-    var db = ObjectDB(path: path + 'test.db');
+    var db = ObjectDB(path + 'test.db');
     await db.open();
 
     expect((await db.find({})).length, 429);
@@ -22,7 +22,7 @@ void main() async {
     await db.close();
   });
 
-  var db = ObjectDB(path: path + 'test.db');
+  var db = ObjectDB(path + 'test.db');
   await db.open();
 
   // fetch all documents

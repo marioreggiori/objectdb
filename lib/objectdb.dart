@@ -31,7 +31,7 @@ class ObjectDB {
 
   Map<String, Op> _operatorMap = Map();
 
-  ObjectDB({this.path}) {
+  ObjectDB(this.path) {
     this._file = new File(this.path);
 
     Op.values.forEach((Op op) {

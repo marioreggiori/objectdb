@@ -11,3 +11,8 @@
 ## [0.0.6] - 2018-06-26
 
 * __BREAKING CHANGE:__ make db path required parameter
+
+
+## [0.0.7] - 2018-06-26
+
+* Remove flutter dependency

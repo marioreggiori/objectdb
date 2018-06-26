@@ -38,7 +38,7 @@ void main() async {
     var count = 0;
 
     for (var doc in test) {
-      testKeys.add(doc['id']);
+      testKeys.add(doc['_id']);
       expect((doc['age'] < 20 && doc['active'] == true), true);
       count++;
     }
@@ -46,7 +46,7 @@ void main() async {
     print('First query count: $count');
 
     for (var doc in all) {
-      if (testKeys.contains(doc['id'])) continue;
+      if (testKeys.contains(doc['_id'])) continue;
       expect((doc['age'] < 20 && doc['active'] == true), false);
       count++;
     }
@@ -69,7 +69,7 @@ void main() async {
     var count = 0;
 
     for (var doc in test) {
-      testKeys.add(doc['id']);
+      testKeys.add(doc['_id']);
       expect(
           ((doc['age'] < 20 ||
                   ['Florida', 'Virginia', 'New Jersey']
@@ -82,7 +82,7 @@ void main() async {
     print('Second query count: $count');
 
     for (var doc in all) {
-      if (testKeys.contains(doc['id'])) continue;
+      if (testKeys.contains(doc['_id'])) continue;
       expect(
           ((doc['age'] < 20 ||
                   ['Florida', 'Virginia', 'New Jersey']

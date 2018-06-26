@@ -1,6 +1,6 @@
 name: objectdb
 description: Persistent embedded NoSQL database for Dart and Flutter. 100% Dart.
-version: 0.0.7
+version: 0.0.8
 author: Team netz.chat <dev@netzchat.com>
 homepage: https://github.com/netz-chat/objectdb
 environment:
@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   execution_queue: ^0.0.2
+  bson_objectid: ^0.1.0
 
 dev_dependencies:
   test: any

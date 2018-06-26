@@ -29,6 +29,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.3"
+  bson_objectid:
+    dependency: "direct main"
+    description:
+      name: bson_objectid
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0"
   charcode:
     dependency: transitive
     description:

@@ -35,6 +35,26 @@ await db.clean();
 await db.close();
 ```
 
+## Methods
+- `db.open([bool clean = true])` opens database
+- `db.clean()` 'clean' .db file
+- `db.close()` closes database
+
+### find
+- `db.find(Map query)` List with all matched documents
+- `db.first(Map query)` first matched document
+- `db.last(Map query)` last matched document
+
+### insert
+- `db.insert(Map document)` insert single document
+- `db.insertMany(List<Map> documents)` insert many documents
+
+### update
+- `db.update(Map query, Map changes, [bool replace = false])` update documents that mach `query` with `changes` (optionally replace whole document)
+
+### delete
+- `db.delete(Map query)` delete documents that match `query`
+
 ## Operators
 ### Logical
 - `and` (default operator on first level)

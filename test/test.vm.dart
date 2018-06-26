@@ -14,10 +14,13 @@ void run() async {
   final db = ObjectDB(path + 'test.db');
   await db.open();
 
-  db.insert({'a': '1'});
-  db.insert({'a': '2'});
-  db.insert({'a': '3'});
-  db.insert({'a': '4'});
+  db.insertMany([
+    {'a': '1'},
+    {'a': '2'},
+    {'a': '3'},
+    {'a': '4'},
+  ]);
+
   db.insert({'a': '5'});
   db.insert({'a': '6'});
   db.insert({'a': '7'});
@@ -25,6 +28,10 @@ void run() async {
   db.insert({'a': '9'});
 
   db.update({Op.gt:{'a':'0'}}, {'b':'c'});
+
+  print(await db.last({
+    Op.gt: {'a': 0},
+  }));
 
   print(await db.find({
     Op.gt: {'a': 0},

@@ -1,5 +1,7 @@
 library objectdb;
 
+import 'package:bson_objectid/bson_objectid.dart';
+
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
@@ -21,18 +23,23 @@ enum Op {
   notInList
 }
 
+enum _Filter {
+  all,
+  first,
+  last,
+}
+
 /// Database class
 class ObjectDB {
   final String path;
   File _file;
   IOSink _writer;
   List<Map<String, dynamic>> _data;
-  ExecutionQueue _executionQueue = new ExecutionQueue();
-
+  ExecutionQueue _executionQueue = ExecutionQueue();
   Map<String, Op> _operatorMap = Map();
 
   ObjectDB(this.path) {
-    this._file = new File(this.path);
+    this._file = File(this.path);
 
     Op.values.forEach((Op op) {
       _operatorMap[op.toString()] = op;
@@ -48,7 +55,7 @@ class ObjectDB {
     this._data = [];
     await reader
         .transform(utf8.decoder)
-        .transform(new LineSplitter())
+        .transform(LineSplitter())
         .forEach((line) {
       if (line != '') {
         try {
@@ -68,7 +75,7 @@ class ObjectDB {
   Future<ObjectDB> _clean() async {
     await this._writer.close();
     await this._file.rename(this.path + '.bak');
-    this._file = new File(this.path);
+    this._file = File(this.path);
     IOSink writer = this._file.openWrite();
     writer.writeAll(this._data.map((data) => json.encode(data)), '\n');
     writer.write('\n');
@@ -197,7 +204,10 @@ class ObjectDB {
     return match;
   }
 
-  void _insertData(data) {
+  void _insertData(Map data) {
+    if (!data.containsKey('_id')) {
+      data['_id'] = ObjectId().toString();
+    }
     this._data.add(data);
   }
 
@@ -217,13 +227,23 @@ class ObjectDB {
   }
 
   /// Find data in cached database object
-  Future _find(query) async {
-    return new Future.sync(
-        (() => this._data.where(this._match(query)).toList()));
+  Future _find(query, [_Filter filter = _Filter.all]) async {
+    return Future.sync((() {
+      var match = this._match(query);
+      if (filter == _Filter.all) {
+        return this._data.where(match).toList();
+      }
+      if (filter == _Filter.first) {
+        return this._data.firstWhere(match);
+      } else {
+        return this._data.lastWhere(match);
+      }
+    }));
   }
 
   /// Insert [data] update cache object and write change to file
   void _insert(data) {
+    data['_id'] = ObjectId().toString();
     this._insertData(data);
     this._writer.writeln('+' + json.encode(data));
   }
@@ -285,16 +305,52 @@ class ObjectDB {
   }
 
   /**
+   * get first document that matches [query]
+   */
+  Future first(Map<dynamic, dynamic> query) {
+    try {
+      return this._executionQueue.add(() => this._find(query, _Filter.first));
+    } catch (e) {
+      throw (e);
+    }
+  }
+
+  /**
+   * get last document that matches [query]
+   */
+  Future last(Map<dynamic, dynamic> query) {
+    try {
+      return this._executionQueue.add(() => this._find(query, _Filter.last));
+    } catch (e) {
+      throw (e);
+    }
+  }
+
+  /**
    * insert document
    */
   Future insert(Map<String, dynamic> doc) {
+    // todo: generated id
     return this._executionQueue.add(() => this._insert(doc));
+  }
+
+  /**
+   * insert many documents
+   */
+  Future insertMany(List<Map<String, dynamic>> docs) {
+    return this._executionQueue.add(() {
+      // todo: generated ids
+      docs.forEach((doc) {
+        this._insert(doc);
+      });
+    });
   }
 
   /**
    * remove documents that match [query]
    */
   Future remove(query) {
+    // todo: count
     return this._executionQueue.add(() => this._remove(query));
   }
 
@@ -303,6 +359,7 @@ class ObjectDB {
    */
   Future update(Map<dynamic, dynamic> query, Map<String, dynamic> changes,
       [bool replace = false]) {
+    // todo: count
     return this
         ._executionQueue
         .add(() => this._update(query, changes, replace));

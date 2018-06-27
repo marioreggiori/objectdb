@@ -26,3 +26,7 @@
 ## [0.0.10] - 2018-06-27
 * insert() -> return object id
 * query examples in README
+
+
+## [0.0.11] - 2018-06-27
+* added example

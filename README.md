@@ -71,7 +71,7 @@ await db.close();
 // not equal to
 {Op.not: {'active': false}}
 ```
-Querying arrays is not supportet yet.
+**NOTE** Querying arrays is not supportet yet.
 
 ## Operators
 ### Logical

@@ -1,6 +1,8 @@
 # ObjectDB
 
-Persistent embedded NoSQL database for [Dart](https://www.dartlang.org/) and [Flutter](https://flutter.io/). 100% Dart.
+[![Pub](https://img.shields.io/pub/v/objectdb.svg)](https://pub.dartlang.org/packages/objectdb)
+
+Persistent embedded document-oriented NoSQL database for [Dart](https://www.dartlang.org/) and [Flutter](https://flutter.io/). 100% Dart.
 
 **CAUTION** This plugin is still in development. **Use at your own risk**. If you notice any bugs you can [create](https://github.com/netz-chat/objectdb/issues/new 'Create issue') an issue on GitHub. You're also welcome to contribute using [pull requests](https://github.com/netz-chat/objectdb/compare 'Pull request'). Please open an issue before spending time on any pull request.
 
@@ -34,24 +36,42 @@ await db.close();
 ```
 
 ## Methods
-- `db.open([bool tidy = true])` opens database
-- `db.tidy()` 'tidy up' the .db file
-- `db.close()` closes database
+- `Future<ObjectDB> db.open([bool tidy = true])` opens database
+- `Future<void> db.tidy()` 'tidy up' the .db file
+- `Future<void> db.close()` closes database
 
 ### find
-- `db.find(Map query)` List with all matched documents
-- `db.first(Map query)` first matched document
-- `db.last(Map query)` last matched document
+- `List<Map> db.find(Map query)` List with all matched documents
+- `Map db.first(Map query)` first matched document
+- `Map db.last(Map query)` last matched document
 
 ### insert
-- `db.insert(Map document)` insert single document
-- `db.insertMany(List<Map> documents)` insert many documents
+- `Future<ObjectId> db.insert(Map document)` insert single document
+- `Future<List<ObjectId>> db.insertMany(List<Map> documents)` insert many documents
 
-### update
-- `db.update(Map query, Map changes, [bool replace = false])` update documents that mach `query` with `changes` (optionally replace whole document)
+### update (TODO: return count)
+- `Future<void> db.update(Map query, Map changes, [bool replace = false])` update documents that mach `query` with `changes` (optionally replace whole document)
 
-### delete
-- `db.delete(Map query)` delete documents that match `query`
+### delete (TODO: return count)
+- `Future<void> db.delete(Map query)` delete documents that match `query`
+
+## Query
+```dart
+// Match fields in subdocuments
+{Op.gte: {
+    'birthday.year': 18
+}}
+
+// or-operator
+{Op.or:{
+    'active': true,
+    Op.inArray: {'group': ['admin', 'moderator']}
+}}
+
+// not equal to
+{Op.not: {'active': false}}
+```
+Querying arrays is not supportet yet.
 
 ## Operators
 ### Logical

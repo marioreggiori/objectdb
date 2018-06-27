@@ -21,3 +21,8 @@
 
 ## [0.0.9] - 2018-06-26
 * __BREAKING CHANGE:__ Rename clean() to tidy()
+
+
+## [0.0.10] - 2018-06-27
+* insert() -> return object id
+* query examples in README

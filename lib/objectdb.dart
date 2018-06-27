@@ -242,10 +242,12 @@ class ObjectDB {
   }
 
   /// Insert [data] update cache object and write change to file
-  void _insert(data) {
-    data['_id'] = ObjectId().toString();
+  ObjectId _insert(data) {
+    ObjectId _id = ObjectId();
+    data['_id'] = _id.toString();
     this._insertData(data);
     this._writer.writeln('+' + json.encode(data));
+    return _id;
   }
 
   /// Replace operator string to corresponding enum
@@ -293,9 +295,8 @@ class ObjectDB {
         json.encode({'q': this._encode(query), 'c': changes, 'r': replace}));
   }
 
-  /**
-   * get all documents that match [query]
-   */
+
+  /// get all documents that match [query]
   Future find(Map<dynamic, dynamic> query) {
     try {
       return this._executionQueue.add(() => this._find(query));
@@ -304,9 +305,8 @@ class ObjectDB {
     }
   }
 
-  /**
-   * get first document that matches [query]
-   */
+  
+  /// get first document that matches [query]
   Future first(Map<dynamic, dynamic> query) {
     try {
       return this._executionQueue.add(() => this._find(query, _Filter.first));
@@ -315,9 +315,7 @@ class ObjectDB {
     }
   }
 
-  /**
-   * get last document that matches [query]
-   */
+  /// get last document that matches [query]   
   Future last(Map<dynamic, dynamic> query) {
     try {
       return this._executionQueue.add(() => this._find(query, _Filter.last));
@@ -326,37 +324,31 @@ class ObjectDB {
     }
   }
 
-  /**
-   * insert document
-   */
+  /// insert document
   Future insert(Map<String, dynamic> doc) {
-    // todo: generated id
     return this._executionQueue.add(() => this._insert(doc));
   }
 
-  /**
-   * insert many documents
-   */
+  
+  /// insert many documents
   Future insertMany(List<Map<String, dynamic>> docs) {
     return this._executionQueue.add(() {
-      // todo: generated ids
+      List<ObjectId> _ids = [];
       docs.forEach((doc) {
-        this._insert(doc);
+        _ids.add(this._insert(doc));
       });
+      return _ids;
     });
   }
 
-  /**
-   * remove documents that match [query]
-   */
+  /// remove documents that match [query]
   Future remove(query) {
     // todo: count
     return this._executionQueue.add(() => this._remove(query));
   }
 
-  /**
-   * update database, takes [query], [changes] and an optional [replace] flag
-   */
+
+  /// update database, takes [query], [changes] and an optional [replace] flag
   Future update(Map<dynamic, dynamic> query, Map<String, dynamic> changes,
       [bool replace = false]) {
     // todo: count
@@ -365,13 +357,13 @@ class ObjectDB {
         .add(() => this._update(query, changes, replace));
   }
 
-  /**
-   * reformat db file
-   */
+
+  /// 'tidy up' .db file
   Future tidy() {
     return this._executionQueue.add(() => this._tidy());
   }
 
+  /// close db
   Future close() {
     return this._executionQueue.add(() async {
       await this._writer.close();

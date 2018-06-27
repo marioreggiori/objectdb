@@ -10,7 +10,7 @@ Persistent embedded NoSQL database for [Dart](https://www.dartlang.org/) and [Fl
 final path = Directory.current.path + '/my.db';
 
 // create database instance and open
-final db = ObjectDB(path: path);
+final db = ObjectDB(path);
 await db.open();
 
 // insert document into database

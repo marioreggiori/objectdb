@@ -47,7 +47,11 @@ class ObjectDB {
   }
 
   /// Opens flat file database
-  Future open([bool tidy = true]) async {
+  Future open([bool tidy = true]) {
+    return this._executionQueue.add(() => this._open(tidy));
+  }
+
+  Future _open(bool tidy) async {
     if (!this._file.existsSync()) {
       this._file.createSync();
     }
@@ -67,7 +71,7 @@ class ObjectDB {
     });
     this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
     if (tidy) {
-      return this.tidy();
+      return await this._tidy();
     }
     return this;
   }
@@ -81,7 +85,7 @@ class ObjectDB {
     writer.write('\n');
     await writer.flush();
     await writer.close();
-    return await this.open(false);
+    return await this._open(false);
   }
 
   void _fromFile(String line) {
@@ -295,7 +299,6 @@ class ObjectDB {
         json.encode({'q': this._encode(query), 'c': changes, 'r': replace}));
   }
 
-
   /// get all documents that match [query]
   Future find(Map<dynamic, dynamic> query) {
     try {
@@ -305,7 +308,6 @@ class ObjectDB {
     }
   }
 
-  
   /// get first document that matches [query]
   Future first(Map<dynamic, dynamic> query) {
     try {
@@ -315,7 +317,7 @@ class ObjectDB {
     }
   }
 
-  /// get last document that matches [query]   
+  /// get last document that matches [query]
   Future last(Map<dynamic, dynamic> query) {
     try {
       return this._executionQueue.add(() => this._find(query, _Filter.last));
@@ -329,7 +331,6 @@ class ObjectDB {
     return this._executionQueue.add(() => this._insert(doc));
   }
 
-  
   /// insert many documents
   Future insertMany(List<Map<String, dynamic>> docs) {
     return this._executionQueue.add(() {
@@ -347,7 +348,6 @@ class ObjectDB {
     return this._executionQueue.add(() => this._remove(query));
   }
 
-
   /// update database, takes [query], [changes] and an optional [replace] flag
   Future update(Map<dynamic, dynamic> query, Map<String, dynamic> changes,
       [bool replace = false]) {
@@ -356,7 +356,6 @@ class ObjectDB {
         ._executionQueue
         .add(() => this._update(query, changes, replace));
   }
-
 
   /// 'tidy up' .db file
   Future tidy() {

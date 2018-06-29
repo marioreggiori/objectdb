@@ -1,11 +1,10 @@
 library objectdb;
 
-import 'package:bson_objectid/bson_objectid.dart';
-
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:execution_queue/execution_queue.dart';
+import 'package:bson_objectid/bson_objectid.dart';
 
 /// Query operators
 enum Op {
@@ -65,7 +64,7 @@ class ObjectDB {
         try {
           this._fromFile(line);
         } catch (e) {
-          print(e.toString());
+          // skip invalid line
         }
       }
     });

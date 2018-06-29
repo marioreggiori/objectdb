@@ -1,6 +1,7 @@
 # ObjectDB
 
 [![Pub](https://img.shields.io/pub/v/objectdb.svg)](https://pub.dartlang.org/packages/objectdb)
+[![license](https://img.shields.io/github/license/netz-chat/objectdb.svg)](https://github.com/netz-chat/objectdb/blob/master/LICENSE)
 
 Persistent embedded document-oriented NoSQL database for [Dart](https://www.dartlang.org/) and [Flutter](https://flutter.io/). 100% Dart.
 
@@ -13,10 +14,10 @@ final path = Directory.current.path + '/my.db';
 
 // create database instance and open
 final db = ObjectDB(path);
-await db.open();
+db.open();
 
 // insert document into database
-db.insert({'name': {'first': 'Some', 'last': 'Body'}, 'age': 18, 'active': false);
+db.insert({'name': {'first': 'Some', 'last': 'Body'}, 'age': 18, 'active': true);
 db.insert({'name': {'first': 'Someone', 'last': 'Else'}, 'age': 25, 'active': false);
 
 // update documents
@@ -26,10 +27,10 @@ db.update({Op.gte: {'age': 80}}, {'active': false});
 db.delete({'active': false});
 
 // search documents in database
-var result = await db.find({'active': true});
+var result = await db.find({'active': true, 'name.first': 'Some'});
 
 // 'tidy up' the db file
-await db.tidy();
+db.tidy();
 
 // close db
 await db.close();
@@ -98,6 +99,13 @@ var result = db.find({
 // same as
 var match = (result['active'] == true && (['Florida', 'Virginia', 'New Jersey'].contains(result['state']) || result['age'] >= 30));
 ```
+
+## Todo's
+- [ ] update & delete count
+- [ ] regex match
+- [ ] encryption
+- [ ] benchmarks
+- [ ] indexing
 
 ## License
 See [License](https://github.com/netz-chat/objectdb/blob/master/LICENSE)

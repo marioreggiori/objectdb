@@ -67,10 +67,12 @@ await db.close();
 
 ### update
 - `Future<void> db.update(Map query, Map changes, [bool replace = false])` update documents that mach `query` with `changes` (optionally replace whole document)
+
 __TODO__ return count
 
 ### delete
 - `Future<void> db.delete(Map query)` delete documents that match `query`
+
 __TODO__ return count
 
 ## Query

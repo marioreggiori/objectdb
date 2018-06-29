@@ -8,6 +8,21 @@ Persistent embedded document-oriented NoSQL database for [Dart](https://www.dart
 **CAUTION** This plugin is still in development. **Use at your own risk**. If you notice any bugs you can [create](https://github.com/netz-chat/objectdb/issues/new 'Create issue') an issue on GitHub. You're also welcome to contribute using [pull requests](https://github.com/netz-chat/objectdb/compare 'Pull request'). Please open an issue before spending time on any pull request.
 
 
+- [How to use](#how-to-use)
+- [Methods](#methods)
+    - [find](#find)
+    - [insert](#insert)
+    - [update](#update)
+    - [delete](#delete)
+- [Query](#query)
+- [Operators](#operators)
+    - [Logical](#logical)
+    - [Comparison](#comparison)
+    - [Examples](#examples)
+- [Todo's](#todos)
+
+
+
 ## How to use
 ```dart
 final path = Directory.current.path + '/my.db';
@@ -50,10 +65,12 @@ await db.close();
 - `Future<ObjectId> db.insert(Map document)` insert single document
 - `Future<List<ObjectId>> db.insertMany(List<Map> documents)` insert many documents
 
-### update (TODO: return count)
+### update
+__TODO__ return count
 - `Future<void> db.update(Map query, Map changes, [bool replace = false])` update documents that mach `query` with `changes` (optionally replace whole document)
 
-### delete (TODO: return count)
+### delete
+__TODO__ return count
 - `Future<void> db.delete(Map query)` delete documents that match `query`
 
 ## Query

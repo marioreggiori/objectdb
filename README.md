@@ -66,12 +66,12 @@ await db.close();
 - `Future<List<ObjectId>> db.insertMany(List<Map> documents)` insert many documents
 
 ### update
-__TODO__ return count
 - `Future<void> db.update(Map query, Map changes, [bool replace = false])` update documents that mach `query` with `changes` (optionally replace whole document)
+__TODO__ return count
 
 ### delete
-__TODO__ return count
 - `Future<void> db.delete(Map query)` delete documents that match `query`
+__TODO__ return count
 
 ## Query
 ```dart

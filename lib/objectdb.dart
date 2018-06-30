@@ -180,17 +180,26 @@ class ObjectDB {
 
         if (op != Op.inList &&
             op != Op.notInList &&
+            (!(query[i] is RegExp) && (op != Op.and && op != Op.or)) &&
             testVal.runtimeType != query[i].runtimeType) continue;
 
         switch (op) {
           case Op.and:
           case Op.not:
             {
+              if (query[i] is RegExp) {
+                if (!query[i].hasMatch(testVal)) return false;
+                break;
+              }
               if (testVal != query[i]) return false;
               break;
             }
           case Op.or:
             {
+              if (query[i] is RegExp) {
+                if (query[i].hasMatch(testVal)) return true;
+                break;
+              }
               if (testVal == query[i]) return true;
               break;
             }
@@ -304,6 +313,13 @@ class ObjectDB {
       if (this._operatorMap.containsKey(key)) {
         key = this._operatorMap[key];
       }
+      if (query[i] is Map && query[i].containsKey('\$type')) {
+        if (query[i]['\$type'] == 'regex') {
+          prepared[key] = RegExp(query[i]['pattern']);
+        }
+        continue;
+      }
+
       if (query[i] is Map) {
         prepared[key] = this._decode(query[i]);
       } else {
@@ -321,13 +337,22 @@ class ObjectDB {
       if (key is Op) {
         key = key.toString();
       }
-      if (query[i] is Map) {
-        prepared[key] = this._encode(query[i]);
-      } else {
-        prepared[key] = query[i];
-      }
+
+      prepared[key] = this._encodeValue(query[i]);
     }
     return prepared;
+  }
+
+  _encodeValue(dynamic value) {
+    if (value is Map) {
+      return this._encode(value);
+    }
+    if (value is String || value is int || value is bool || value is List) {
+      return value;
+    }
+    if (value is RegExp) {
+      return {'\$type': 'regex', 'pattern': value.pattern};
+    }
   }
 
   int _remove(Map query) {

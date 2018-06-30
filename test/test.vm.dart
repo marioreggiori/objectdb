@@ -27,7 +27,13 @@ void run() async {
   db.insert({'a': '8'});
   db.insert({'a': '9'});
 
-  db.update({Op.gt:{'a':'0'}}, {'b':'c'});
+  db.update({
+    Op.gt: {'a': '0'}
+  }, {
+    'b': 'c'
+  });
+
+  //print((await db.remove({'a': RegExp('[3-6]')})));
 
   print(await db.last({
     Op.gt: {'a': 0},

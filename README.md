@@ -116,7 +116,7 @@ var match = (result['active'] == true && (['Florida', 'Virginia', 'New Jersey'].
 ```
 
 ## Todo's
-- [ ] regex match
+- [x] regex match
 - [ ] encryption
 - [ ] benchmarks
 - [ ] indexing

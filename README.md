@@ -52,9 +52,9 @@ await db.close();
 ```
 
 ## Methods
-- `Future<ObjectDB> db.open([bool tidy = true])` opens database (should be awaited to ensure all queries have been executed)
+- `Future<ObjectDB> db.open([bool tidy = true])` opens database
 - `Future<void> db.tidy()` 'tidy up' the .db file
-- `Future<void> db.close()` closes database
+- `Future<void> db.close()` closes database (should be awaited to ensure all queries have been executed)
 
 ### find
 - `Future<List<Map>> db.find(Map query)` List with all matched documents

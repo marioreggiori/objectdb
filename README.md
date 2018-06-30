@@ -52,14 +52,14 @@ await db.close();
 ```
 
 ## Methods
-- `Future<ObjectDB> db.open([bool tidy = true])` opens database
+- `Future<ObjectDB> db.open([bool tidy = true])` opens database (should be awaited to ensure all queries have been executed)
 - `Future<void> db.tidy()` 'tidy up' the .db file
 - `Future<void> db.close()` closes database
 
 ### find
-- `List<Map> db.find(Map query)` List with all matched documents
-- `Map db.first(Map query)` first matched document
-- `Map db.last(Map query)` last matched document
+- `Future<List<Map>> db.find(Map query)` List with all matched documents
+- `Future<Map> db.first(Map query)` first matched document
+- `Future<Map> db.last(Map query)` last matched document
 
 ### insert
 - `Future<ObjectId> db.insert(Map document)` insert single document

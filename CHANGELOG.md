@@ -37,3 +37,6 @@
 
 ## [0.1.0] - 2018-06-30
 * updated docs
+
+## [0.1.1] - 2018-06-30
+* updated execution_queue

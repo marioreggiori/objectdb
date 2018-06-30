@@ -40,3 +40,7 @@
 
 ## [0.1.1] - 2018-06-30
 * updated execution_queue
+
+## [0.1.2] - 2018-06-30
+* regex support
+* db meta

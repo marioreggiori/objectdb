@@ -66,14 +66,10 @@ await db.close();
 - `Future<List<ObjectId>> db.insertMany(List<Map> documents)` insert many documents
 
 ### update
-- `Future<void> db.update(Map query, Map changes, [bool replace = false])` update documents that mach `query` with `changes` (optionally replace whole document)
-
-__TODO__ return count
+- `Future<int> db.update(Map query, Map changes, [bool replace = false])` update documents that mach `query` with `changes` (optionally replace whole document)
 
 ### delete
-- `Future<void> db.delete(Map query)` delete documents that match `query`
-
-__TODO__ return count
+- `Future<int> db.delete(Map query)` delete documents that match `query`
 
 ## Query
 ```dart
@@ -120,7 +116,6 @@ var match = (result['active'] == true && (['Florida', 'Virginia', 'New Jersey'].
 ```
 
 ## Todo's
-- [ ] update & delete count
 - [ ] regex match
 - [ ] encryption
 - [ ] benchmarks

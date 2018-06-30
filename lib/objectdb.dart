@@ -28,6 +28,29 @@ enum _Filter {
   last,
 }
 
+class _Meta {
+  final int version;
+
+  factory _Meta(version) {
+    return new _Meta.internal(version: version);
+  }
+
+  factory _Meta.fromMap(Map<String, dynamic> data) {
+    getKey(String key) {
+      if (data.containsKey(key)) return data[key];
+      return null;
+    }
+
+    return new _Meta.internal(version: getKey('version'));
+  }
+
+  _Meta.internal({this.version});
+
+  String toString() {
+    return json.encode({"version": this.version});
+  }
+}
+
 /// Database class
 class ObjectDB {
   final String path;
@@ -36,6 +59,7 @@ class ObjectDB {
   List<Map<String, dynamic>> _data;
   ExecutionQueue _executionQueue = ExecutionQueue();
   Map<String, Op> _operatorMap = Map();
+  _Meta _meta;
 
   ObjectDB(this.path) {
     this._file = File(this.path);
@@ -56,11 +80,24 @@ class ObjectDB {
     }
     var reader = this._file.openRead();
     this._data = [];
+    bool firstLine = true;
     await reader
         .transform(utf8.decoder)
         .transform(LineSplitter())
         .forEach((line) {
       if (line != '') {
+        if (firstLine) {
+          firstLine = false;
+          if (line.startsWith("\$objectdb")) {
+            try {
+              this._meta = _Meta.fromMap(json.decode(line.substring(9)));
+            } catch (e) {
+              // no valid meta -> default meta
+              this._meta = _Meta(1);
+            }
+            return;
+          }
+        }
         try {
           this._fromFile(line);
         } catch (e) {
@@ -80,6 +117,7 @@ class ObjectDB {
     await this._file.rename(this.path + '.bak');
     this._file = File(this.path);
     IOSink writer = this._file.openWrite();
+    writer.writeln('\$objectdb' + this._meta.toString());
     writer.writeAll(this._data.map((data) => json.encode(data)), '\n');
     writer.write('\n');
     await writer.flush();
@@ -214,19 +252,24 @@ class ObjectDB {
     this._data.add(data);
   }
 
-  void _removeData(Map<dynamic, dynamic> query) {
+  int _removeData(Map<dynamic, dynamic> query) {
+    int count = this._data.where(this._match(query)).length;
     this._data.removeWhere(this._match(query));
+    return count;
   }
 
-  void _updateData(
+  int _updateData(
       Map<dynamic, dynamic> query, Map<String, dynamic> changes, bool replace) {
+    int count = 0;
     var matcher = this._match(query);
     for (var i = 0; i < this._data.length; i++) {
       if (!matcher(this._data[i])) continue;
+      count++;
       for (var o in changes.keys) {
         this._data[i][o] = changes[o];
       }
     }
+    return count;
   }
 
   /// Find data in cached database object
@@ -248,8 +291,8 @@ class ObjectDB {
   ObjectId _insert(data) {
     ObjectId _id = ObjectId();
     data['_id'] = _id.toString();
-    this._insertData(data);
     this._writer.writeln('+' + json.encode(data));
+    this._insertData(data);
     return _id;
   }
 
@@ -287,15 +330,15 @@ class ObjectDB {
     return prepared;
   }
 
-  void _remove(Map query) {
-    this._removeData(query);
+  int _remove(Map query) {
     this._writer.writeln('-' + json.encode(this._encode(query)));
+    return this._removeData(query);
   }
 
-  void _update(query, changes, replace) {
-    this._updateData(query, changes, replace);
+  int _update(query, changes, replace) {
     this._writer.writeln('~' +
         json.encode({'q': this._encode(query), 'c': changes, 'r': replace}));
+    return this._updateData(query, changes, replace);
   }
 
   /// get all documents that match [query]

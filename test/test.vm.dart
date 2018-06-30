@@ -28,7 +28,8 @@ void run() async {
   db.insert({'a': '9'});
 
   db.update({
-    Op.gt: {'a': '0'}
+    Op.gt: {'a': '0'},
+    'a': RegExp('[4-7]'),
   }, {
     'b': 'c'
   });

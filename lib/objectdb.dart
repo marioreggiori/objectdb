@@ -59,7 +59,7 @@ class ObjectDB {
   List<Map<String, dynamic>> _data;
   ExecutionQueue _executionQueue = ExecutionQueue();
   Map<String, Op> _operatorMap = Map();
-  _Meta _meta;
+  _Meta _meta = _Meta(1);
 
   ObjectDB(this.path) {
     this._file = File(this.path);
@@ -93,7 +93,6 @@ class ObjectDB {
               this._meta = _Meta.fromMap(json.decode(line.substring(9)));
             } catch (e) {
               // no valid meta -> default meta
-              this._meta = _Meta(1);
             }
             return;
           }

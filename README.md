@@ -2,6 +2,8 @@
 
 [![Pub](https://img.shields.io/pub/v/objectdb.svg)](https://pub.dartlang.org/packages/objectdb)
 [![license](https://img.shields.io/github/license/netz-chat/objectdb.svg)](https://github.com/netz-chat/objectdb/blob/master/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/netz-chat/objectdb.svg?style=plastic&label=Stars)](https://github.com/netz-chat/objectdb/stargazers)
+
 
 Persistent embedded document-oriented NoSQL database for [Dart](https://www.dartlang.org/) and [Flutter](https://flutter.io/). 100% Dart.
 

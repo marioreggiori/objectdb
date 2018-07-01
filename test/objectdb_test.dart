@@ -13,8 +13,10 @@ void main() async {
   file = File(path + 'init.db');
   file.copySync(path + 'test.db');
 
+  ObjectDB db;
+
   test('initialize database', () async {
-    var db = ObjectDB(path + 'test.db');
+    db = ObjectDB(path + 'test.db');
     await db.open();
 
     expect((await db.find({})).length, 429);
@@ -22,7 +24,7 @@ void main() async {
     await db.close();
   });
 
-  var db = ObjectDB(path + 'test.db');
+  db = ObjectDB(path + 'test.db');
   await db.open();
 
   // fetch all documents
@@ -39,7 +41,7 @@ void main() async {
 
     for (var doc in test) {
       testKeys.add(doc['_id']);
-      expect((doc['age'] < 20 && doc['active'] == true), true);
+      if (!(doc['age'] < 20 && doc['active'] == true)) throw 'failed';
       count++;
     }
 
@@ -47,7 +49,7 @@ void main() async {
 
     for (var doc in all) {
       if (testKeys.contains(doc['_id'])) continue;
-      expect((doc['age'] < 20 && doc['active'] == true), false);
+      if ((doc['age'] < 20 && doc['active'] == true)) throw 'failed';
       count++;
     }
 
@@ -93,6 +95,28 @@ void main() async {
     }
 
     expect(count, all.length);
+  });
+
+  test('regex', () async {
+    List res = await db.find({
+      'name.first': RegExp('en'),
+      Op.or: {
+        'active': false,
+        Op.inList: {
+          'state': ['Alaska', 'Ohio']
+        },
+      }
+    });
+
+    testResult(result, bool shouldBeTrue) {
+      var regex = RegExp('en');
+      if (((regex.hasMatch(result['name']['first']) &&
+              (result['active'] == false ||
+                  ['Alaska', 'Ohio'].contains(result['state'])))) !=
+          shouldBeTrue) throw 'invalid';
+    }
+
+    res.forEach((result) => testResult(result, true));
   });
 
   test('operators', () async {});

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:objectdb/objectdb.dart';
 
 void main() async {
@@ -7,7 +6,7 @@ void main() async {
   db.open();
 
   // insert documents
-  var ids = await db.insertMany([
+  await db.insertMany([
     {
       "name": {"first": "Maria", "last": "Smith"},
       "age": 20,

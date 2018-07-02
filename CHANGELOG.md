@@ -44,3 +44,6 @@
 ## [0.1.2] - 2018-06-30
 * regex support
 * db meta
+
+## [0.1.6] - 2018-07-02
+* advanced return types

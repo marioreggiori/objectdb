@@ -1,6 +1,8 @@
-import 'package:test/test.dart';
 import 'dart:io';
+import 'dart:async';
+import 'package:test/test.dart';
 import 'package:objectdb/objectdb.dart';
+import 'package:bson_objectid/bson_objectid.dart';
 
 void main() async {
   // init test.db
@@ -15,17 +17,7 @@ void main() async {
 
   ObjectDB db;
 
-  test('initialize database', () async {
-    db = ObjectDB(path + 'test.db');
-    await db.open();
-
-    expect((await db.find({})).length, 429);
-
-    await db.close();
-  });
-
-  db = ObjectDB(path + 'test.db');
-  await db.open();
+  db = await ObjectDB(path + 'test.db').open();
 
   // fetch all documents
   var all = await db.find({});
@@ -119,7 +111,30 @@ void main() async {
     res.forEach((result) => testResult(result, true));
   });
 
+  test('type checking', () async {
+    List<Map<String, dynamic>> res1 = await db.find({'active': true});
+    Map<String, dynamic> res2 = await db.first({'active': true});
+    Map<String, dynamic> res3 = await db.last({'active': true});
+
+    ObjectId id = await db.insert({'test': 1});
+    List<ObjectId> ids = await db.insertMany([
+      {'test': 1},
+      {'test': 2}
+    ]);
+
+    print(id);
+    print(ids);
+
+    int countUpdate = await db.update({'active': false}, {'status': true});
+    int removeCount = await db.remove({'state': 'Alaska'});
+
+    print('update count ' + countUpdate.toString());
+    print('remove count ' + removeCount.toString());
+  });
+
   test('operators', () async {});
 
-  db.close();
+  test('close db', () async {
+    db.close();
+  });
 }

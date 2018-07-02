@@ -70,8 +70,8 @@ class ObjectDB {
   }
 
   /// Opens flat file database
-  Future open([bool tidy = true]) {
-    return this._executionQueue.add(() => this._open(tidy));
+  Future<ObjectDB> open([bool tidy = true]) {
+    return this._executionQueue.add<ObjectDB>(() => this._open(tidy));
   }
 
   Future _open(bool tidy) async {
@@ -277,6 +277,7 @@ class ObjectDB {
         this._data[i][o] = changes[o];
       }
     }
+
     return count;
   }
 
@@ -366,40 +367,40 @@ class ObjectDB {
   }
 
   /// get all documents that match [query]
-  Future find(Map<dynamic, dynamic> query) {
+  Future<List<Map<String,dynamic>>> find(Map<dynamic, dynamic> query) {
     try {
-      return this._executionQueue.add(() => this._find(query));
+      return this._executionQueue.add<List<Map<String,dynamic>>>(() => this._find(query));
     } catch (e) {
       throw (e);
     }
   }
 
   /// get first document that matches [query]
-  Future first(Map<dynamic, dynamic> query) {
+  Future<Map<String,dynamic>> first(Map<dynamic, dynamic> query) {
     try {
-      return this._executionQueue.add(() => this._find(query, _Filter.first));
+      return this._executionQueue.add<Map<String,dynamic>>(() => this._find(query, _Filter.first));
     } catch (e) {
       throw (e);
     }
   }
 
   /// get last document that matches [query]
-  Future last(Map<dynamic, dynamic> query) {
+  Future<Map<String,dynamic>> last(Map<dynamic, dynamic> query) {
     try {
-      return this._executionQueue.add(() => this._find(query, _Filter.last));
+      return this._executionQueue.add<Map<String,dynamic>>(() => this._find(query, _Filter.last));
     } catch (e) {
       throw (e);
     }
   }
 
   /// insert document
-  Future insert(Map<String, dynamic> doc) {
-    return this._executionQueue.add(() => this._insert(doc));
+  Future<ObjectId> insert(Map<String, dynamic> doc) {
+    return this._executionQueue.add<ObjectId>(() => this._insert(doc));
   }
 
   /// insert many documents
-  Future insertMany(List<Map<String, dynamic>> docs) {
-    return this._executionQueue.add(() {
+  Future<List<ObjectId>> insertMany(List<Map<String, dynamic>> docs) {
+    return this._executionQueue.add<List<ObjectId>>(() {
       List<ObjectId> _ids = [];
       docs.forEach((doc) {
         _ids.add(this._insert(doc));
@@ -409,23 +410,22 @@ class ObjectDB {
   }
 
   /// remove documents that match [query]
-  Future remove(query) {
+  Future<int> remove(query) {
     // todo: count
-    return this._executionQueue.add(() => this._remove(query));
+    return this._executionQueue.add<int>(() => this._remove(query));
   }
 
   /// update database, takes [query], [changes] and an optional [replace] flag
-  Future update(Map<dynamic, dynamic> query, Map<String, dynamic> changes,
+  Future<int> update(Map<dynamic, dynamic> query, Map<String, dynamic> changes,
       [bool replace = false]) {
-    // todo: count
     return this
         ._executionQueue
-        .add(() => this._update(query, changes, replace));
+        .add<int>(() => this._update(query, changes, replace));
   }
 
   /// 'tidy up' .db file
-  Future tidy() {
-    return this._executionQueue.add(() => this._tidy());
+  Future<ObjectDB> tidy() {
+    return this._executionQueue.add<ObjectDB>(() => this._tidy());
   }
 
   /// close db

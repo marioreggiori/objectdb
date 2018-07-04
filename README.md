@@ -11,6 +11,7 @@ Persistent embedded document-oriented NoSQL database for [Dart](https://www.dart
 
 
 - [How to use](#how-to-use)
+- [Flutter](#flutter)
 - [Methods](#methods)
     - [find](#find)
     - [insert](#insert)
@@ -52,6 +53,9 @@ db.tidy();
 // close db
 await db.close();
 ```
+
+## Flutter
+Check out [this](https://github.com/netz-chat/flutter_examples/tree/master/objectdb) project for flutter-examples.
 
 ## Methods
 - `Future<ObjectDB> db.open([bool tidy = true])` opens database

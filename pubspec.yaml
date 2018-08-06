@@ -4,7 +4,7 @@ version: 0.1.10
 author: Team netz.chat <dev@netzchat.com>
 homepage: https://github.com/netz-chat/objectdb
 environment:
-    sdk: '>=2.0.0-dev.1.2 <2.0.0'
+    sdk: '>=2.0.0-dev.61.0 <3.0.0'
 
 dependencies:
   execution_queue: ^0.1.3

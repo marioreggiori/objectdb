@@ -5,21 +5,31 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:execution_queue/execution_queue.dart';
 import 'package:bson_objectid/bson_objectid.dart';
+import 'package:deeply/deeply.dart';
 
 /// Query operators
 enum Op {
+  // match operators
   and,
   or,
   not,
-
+  //
   lt,
   gt,
   lte,
   gte,
   ne,
-
+  //
   inList,
-  notInList
+  notInList,
+  // update operators
+  set,
+  //unset, todo
+  max,
+  min,
+  increment,
+  multiply,
+  //rename, todo
 }
 
 enum _Filter {
@@ -56,7 +66,7 @@ class ObjectDB {
   final String path;
   File _file;
   IOSink _writer;
-  List<Map<String, dynamic>> _data;
+  List<Map<dynamic, dynamic>> _data;
   ExecutionQueue _executionQueue = ExecutionQueue();
   Map<String, Op> _operatorMap = Map();
   _Meta _meta = _Meta(1);
@@ -139,7 +149,7 @@ class ObjectDB {
       case '~':
         {
           var u = json.decode(line.substring(1));
-          this._updateData(this._decode(u['q']), u['c'], u['r']);
+          this._updateData(this._decode(u['q']), this._decode(u['c']), u['r']);
           break;
         }
       case '{':
@@ -266,15 +276,74 @@ class ObjectDB {
     return count;
   }
 
-  int _updateData(
-      Map<dynamic, dynamic> query, Map<String, dynamic> changes, bool replace) {
+  int _updateData(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
+      bool replace) {
     int count = 0;
     var matcher = this._match(query);
     for (var i = 0; i < this._data.length; i++) {
       if (!matcher(this._data[i])) continue;
       count++;
+
+      if (replace) this._data[i] = Map<dynamic, dynamic>();
+
       for (var o in changes.keys) {
-        this._data[i][o] = changes[o];
+        if (o is Op) {
+          for (String p in changes[o].keys) {
+            var keyPath = p.split('.');
+            switch (o) {
+              case Op.set:
+                {
+                  this._data[i] = deepUpdate(
+                      keyPath, this._data[i], (value) => changes[o][p]);
+                  break;
+                }
+              /*case Op.unset:
+                {
+                  break;
+                }*/
+              case Op.max:
+                {
+                  this._data[i] = deepUpdate(
+                      keyPath,
+                      this._data[i],
+                      (value) => value > changes[o][p] ? changes[o][p] : value,
+                      0);
+                  break;
+                }
+              case Op.min:
+                {
+                  this._data[i] = deepUpdate(
+                      keyPath,
+                      this._data[i],
+                      (value) => value < changes[o][p] ? changes[o][p] : value,
+                      0);
+                  break;
+                }
+              case Op.increment:
+                {
+                  this._data[i] = deepUpdate(keyPath, this._data[i],
+                      (value) => value += changes[o][p], 0);
+                  break;
+                }
+              case Op.multiply:
+                {
+                  this._data[i] = deepUpdate(keyPath, this._data[i],
+                      (value) => value *= changes[o][p], 0);
+                  break;
+                }
+              /*case Op.rename:
+                {
+                  break;
+                }*/
+              default:
+                {
+                  throw 'invalid';
+                }
+            }
+          }
+        } else {
+          this._data[i][o] = changes[o];
+        }
       }
     }
 
@@ -362,44 +431,54 @@ class ObjectDB {
 
   int _update(query, changes, replace) {
     this._writer.writeln('~' +
-        json.encode({'q': this._encode(query), 'c': changes, 'r': replace}));
+        json.encode({
+          'q': this._encode(query),
+          'c': this._encode(changes),
+          'r': replace
+        }));
     return this._updateData(query, changes, replace);
   }
 
   /// get all documents that match [query]
-  Future<List<Map<String,dynamic>>> find(Map<dynamic, dynamic> query) {
+  Future<List<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query) {
     try {
-      return this._executionQueue.add<List<Map<String,dynamic>>>(() => this._find(query));
+      return this
+          ._executionQueue
+          .add<List<Map<dynamic, dynamic>>>(() => this._find(query));
     } catch (e) {
       throw (e);
     }
   }
 
   /// get first document that matches [query]
-  Future<Map<String,dynamic>> first(Map<dynamic, dynamic> query) {
+  Future<Map<dynamic, dynamic>> first(Map<dynamic, dynamic> query) {
     try {
-      return this._executionQueue.add<Map<String,dynamic>>(() => this._find(query, _Filter.first));
+      return this
+          ._executionQueue
+          .add<Map<dynamic, dynamic>>(() => this._find(query, _Filter.first));
     } catch (e) {
       throw (e);
     }
   }
 
   /// get last document that matches [query]
-  Future<Map<String,dynamic>> last(Map<dynamic, dynamic> query) {
+  Future<Map<dynamic, dynamic>> last(Map<dynamic, dynamic> query) {
     try {
-      return this._executionQueue.add<Map<String,dynamic>>(() => this._find(query, _Filter.last));
+      return this
+          ._executionQueue
+          .add<Map<dynamic, dynamic>>(() => this._find(query, _Filter.last));
     } catch (e) {
       throw (e);
     }
   }
 
   /// insert document
-  Future<ObjectId> insert(Map<String, dynamic> doc) {
+  Future<ObjectId> insert(Map<dynamic, dynamic> doc) {
     return this._executionQueue.add<ObjectId>(() => this._insert(doc));
   }
 
   /// insert many documents
-  Future<List<ObjectId>> insertMany(List<Map<String, dynamic>> docs) {
+  Future<List<ObjectId>> insertMany(List<Map<dynamic, dynamic>> docs) {
     return this._executionQueue.add<List<ObjectId>>(() {
       List<ObjectId> _ids = [];
       docs.forEach((doc) {
@@ -416,7 +495,7 @@ class ObjectDB {
   }
 
   /// update database, takes [query], [changes] and an optional [replace] flag
-  Future<int> update(Map<dynamic, dynamic> query, Map<String, dynamic> changes,
+  Future<int> update(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
       [bool replace = false]) {
     return this
         ._executionQueue

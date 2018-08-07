@@ -21,6 +21,7 @@ Persistent embedded document-oriented NoSQL database for [Dart](https://www.dart
 - [Operators](#operators)
     - [Logical](#logical)
     - [Comparison](#comparison)
+    - [Modify](#modify)
     - [Examples](#examples)
 - [Todo's](#todos)
 
@@ -105,6 +106,23 @@ Check out [this](https://github.com/netz-chat/flutter_examples/tree/master/objec
 - `lt`, `lte`: less than, less than or equal
 - `gt`, `gte`: greater than, greater than or equal
 - `inList`, `notInList`: value in list, value not in list
+
+
+### Modify
+- `set`: set value
+- `max`, `min`: set max or min int value
+- `increment`, `multiply`: increment/multiply by
+- todo's: `push`, `unset`, `rename`
+
+```dart
+  db.update({
+    'age': RegExp('[18-20]'),
+    Op.gt: {'duration': 500},
+  }, {
+    Op.max: {'stats.score': 100},
+    Op.increment: {'stats.level': -5},
+  });
+```
 
 ### Examples
 ```dart

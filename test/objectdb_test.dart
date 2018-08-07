@@ -111,9 +111,9 @@ void main() async {
   });
 
   test('type checking', () async {
-    List<Map<String, dynamic>> res1 = await db.find({'active': true});
-    Map<String, dynamic> res2 = await db.first({'active': true});
-    Map<String, dynamic> res3 = await db.last({'active': true});
+    List<Map<dynamic, dynamic>> res1 = await db.find({'active': true});
+    Map<dynamic, dynamic> res2 = await db.first({'active': true});
+    Map<dynamic, dynamic> res3 = await db.last({'active': true});
 
     ObjectId id = await db.insert({'test': 1});
     List<ObjectId> ids = await db.insertMany([

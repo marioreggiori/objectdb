@@ -31,6 +31,7 @@ void run() async {
     Op.gt: {'a': '0'},
     'a': RegExp('[4-7]'),
   }, {
+    Op.max: {'n': 100},
     'b': 'c'
   });
 

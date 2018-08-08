@@ -16,7 +16,7 @@ Persistent embedded document-oriented NoSQL database for [Dart](https://www.dart
     - [find](#find)
     - [insert](#insert)
     - [update](#update)
-    - [delete](#delete)
+    - [remove](#remove)
 - [Query](#query)
 - [Operators](#operators)
     - [Logical](#logical)
@@ -42,8 +42,8 @@ db.insert({'name': {'first': 'Someone', 'last': 'Else'}, 'age': 25, 'active': fa
 // update documents
 db.update({Op.gte: {'age': 80}}, {'active': false});
 
-// delete documents
-db.delete({'active': false});
+// remove documents
+db.remove({'active': false});
 
 // search documents in database
 var result = await db.find({'active': true, 'name.first': 'Some'});
@@ -75,8 +75,8 @@ Check out [this](https://github.com/netz-chat/flutter_examples/tree/master/objec
 ### update
 - `Future<int> db.update(Map query, Map changes, [bool replace = false])` update documents that mach `query` with `changes` (optionally replace whole document)
 
-### delete
-- `Future<int> db.delete(Map query)` delete documents that match `query`
+### remove
+- `Future<int> db.remove(Map query)` remove documents that match `query`
 
 ## Query
 ```dart

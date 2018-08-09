@@ -14,12 +14,14 @@ void run() async {
   final db = ObjectDB(path + 'test.db');
   await db.open();
 
-  print(await db.insertMany([
+  var ids = await db.insertMany([
     {'a': '1'},
     {'a': '2'},
     {'a': '3'},
     {'a': '4'},
-  ]));
+  ]);
+
+  print(await db.find({'_id': ids[2]}));
 
   print(await db.insert({'a': '5'}));
   db.insert({'a': '6'});

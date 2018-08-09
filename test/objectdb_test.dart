@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:test/test.dart';
 import 'package:objectdb/objectdb.dart';
-import 'package:bson_objectid/bson_objectid.dart';
 
 void main() async {
   // init test.db

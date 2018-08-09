@@ -29,13 +29,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.3"
-  bson_objectid:
-    dependency: "direct main"
-    description:
-      name: bson_objectid
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.0"
   charcode:
     dependency: transitive
     description:
@@ -77,14 +70,14 @@ packages:
       name: deeply
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.0.6"
+    version: "1.0.0"
   execution_queue:
     dependency: "direct main"
     description:
       name: execution_queue
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.3"
+    version: "1.0.0"
   front_end:
     dependency: transitive
     description:

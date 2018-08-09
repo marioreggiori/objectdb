@@ -47,3 +47,6 @@
 
 ## [0.1.6] - 2018-07-02
 * advanced return types
+
+## [0.1.14] - 2018-08-09
+* enhanced update queries

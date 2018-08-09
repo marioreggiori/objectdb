@@ -24,12 +24,12 @@ enum Op {
   notInList,
   // update operators
   set,
-  //unset, todo
+  unset,
   max,
   min,
   increment,
   multiply,
-  //rename, todo
+  rename
 }
 
 enum _Filter {
@@ -297,10 +297,13 @@ class ObjectDB {
                       keyPath, this._data[i], (value) => changes[o][p]);
                   break;
                 }
-              /*case Op.unset:
+              case Op.unset:
                 {
+                  if (changes[o][p] == true) {
+                    this._data[i] = removeDeeply(keyPath, this._data[i]);
+                  }
                   break;
-                }*/
+                }
               case Op.max:
                 {
                   this._data[i] = deepUpdate(
@@ -331,10 +334,12 @@ class ObjectDB {
                       (value) => value *= changes[o][p], 0);
                   break;
                 }
-              /*case Op.rename:
+              case Op.rename:
                 {
+                  this._data[i] =
+                      renameDeeply(keyPath, changes[o][p], this._data[i]);
                   break;
-                }*/
+                }
               default:
                 {
                   throw 'invalid';

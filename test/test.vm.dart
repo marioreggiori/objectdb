@@ -35,6 +35,14 @@ void run() async {
     'b': 'c'
   });
 
+  db.update({
+    Op.gt: {'a': '0'},
+    'a': RegExp('[4-7]'),
+  }, {
+    Op.rename: {'b': 'ü'},
+    Op.unset: {'n': true},
+  });
+
   //print((await db.remove({'a': RegExp('[3-6]')})));
 
   print(await db.last({

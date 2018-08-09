@@ -112,16 +112,27 @@ Check out [this](https://github.com/netz-chat/flutter_examples/tree/master/objec
 - `set`: set value
 - `max`, `min`: set max or min int value
 - `increment`, `multiply`: increment/multiply by
-- todo's: `push`, `unset`, `rename`
+- `unset`: unset key/value
+- `rename`: rename key
+- todo's: `push`
 
 ```dart
-  db.update({
-    'age': RegExp('[18-20]'),
-    Op.gt: {'duration': 500},
-  }, {
-    Op.max: {'stats.score': 100},
-    Op.increment: {'stats.level': -5},
-  });
+{Op.set: {'path.to.key': 'value'}} // set entry['path']['to']['key'] = 'value' (path will be created if not exists)
+{Op.max: {'path.to.key': 200}} // set value 200 if value is greater than 200
+{Op.min: {'path.to.key': 200}} // set value 200 if value is smaller than 200
+{Op.increment: {'path.to.key': -5}} // increment value by negative 5
+{Op.multiply: {'path.to.key': 2}} // multiply value by 2
+{Op.unset: {'path.to.key': true}} // unset key/value at entry['path']['to']['key'] if exists
+{Op.rename: {'path.to.key': 'new_key'}} // new value will be at entry['path']['to']['new_key']
+
+
+db.update({
+  'age': RegExp('[18-20]'),
+  Op.gt: {'duration': 500},
+}, {
+  Op.max: {'stats.score': 100},
+  Op.increment: {'stats.level': -5},
+});
 ```
 
 ### Examples

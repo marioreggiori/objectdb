@@ -293,7 +293,7 @@ class ObjectDB {
             switch (o) {
               case Op.set:
                 {
-                  this._data[i] = deepUpdate(
+                  this._data[i] = updateDeeply(
                       keyPath, this._data[i], (value) => changes[o][p]);
                   break;
                 }
@@ -306,7 +306,7 @@ class ObjectDB {
                 }
               case Op.max:
                 {
-                  this._data[i] = deepUpdate(
+                  this._data[i] = updateDeeply(
                       keyPath,
                       this._data[i],
                       (value) => value > changes[o][p] ? changes[o][p] : value,
@@ -315,7 +315,7 @@ class ObjectDB {
                 }
               case Op.min:
                 {
-                  this._data[i] = deepUpdate(
+                  this._data[i] = updateDeeply(
                       keyPath,
                       this._data[i],
                       (value) => value < changes[o][p] ? changes[o][p] : value,
@@ -324,13 +324,13 @@ class ObjectDB {
                 }
               case Op.increment:
                 {
-                  this._data[i] = deepUpdate(keyPath, this._data[i],
+                  this._data[i] = updateDeeply(keyPath, this._data[i],
                       (value) => value += changes[o][p], 0);
                   break;
                 }
               case Op.multiply:
                 {
-                  this._data[i] = deepUpdate(keyPath, this._data[i],
+                  this._data[i] = updateDeeply(keyPath, this._data[i],
                       (value) => value *= changes[o][p], 0);
                   break;
                 }

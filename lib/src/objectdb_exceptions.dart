@@ -4,5 +4,4 @@ class ObjectDBException implements Exception {
   ObjectDBException(this.message);
 }
 
-
 const Message_Invalid_Param = '';

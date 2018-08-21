@@ -70,14 +70,14 @@ packages:
       name: deeply
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.0"
+    version: "1.0.1"
   execution_queue:
     dependency: "direct main"
     description:
       name: execution_queue
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   front_end:
     dependency: transitive
     description:
@@ -345,4 +345,4 @@ packages:
     source: hosted
     version: "2.1.13"
 sdks:
-  dart: ">=2.0.0-dev.61.0 <=2.0.0-dev.66.0"
+  dart: ">=2.0.0-dev.52.0 <=2.0.0-dev.66.0"

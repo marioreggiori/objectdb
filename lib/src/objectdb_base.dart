@@ -258,7 +258,6 @@ class ObjectDB {
             break;
           }
       }
-      listener.callback(method, data);
     });
   }
 
@@ -271,7 +270,8 @@ class ObjectDB {
   }
 
   int _removeData(Map<dynamic, dynamic> query) {
-    List match = this._data.where(this._match(query)).map((doc) => doc['_id']).toList();
+    List match =
+        this._data.where(this._match(query)).map((doc) => doc['_id']).toList();
     int count = match.length;
     _push(Method.remove, match);
     this._data.removeWhere(this._match(query));

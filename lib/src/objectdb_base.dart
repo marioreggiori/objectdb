@@ -8,6 +8,7 @@ import 'package:objectdb/src/objectdb_filter.dart';
 import 'package:objectdb/src/objectdb_meta.dart';
 import 'package:objectdb/src/objectdb_objectid.dart';
 import 'package:objectdb/src/objectdb_exceptions.dart';
+import 'package:objectdb/src/objectdb_listener.dart';
 
 /// Database class
 class ObjectDB {
@@ -18,6 +19,8 @@ class ObjectDB {
   ExecutionQueue _executionQueue = ExecutionQueue();
   Map<String, Op> _operatorMap = Map();
   Meta _meta = Meta(1);
+
+  List<Listener> listeners = List<Listener>();
 
   ObjectDB(this.path) {
     this._file = File(this.path);
@@ -229,15 +232,48 @@ class ObjectDB {
     return match;
   }
 
+  void _push(Method method, dynamic data) {
+    listeners.forEach((listener) {
+      Function match = _match(listener.query);
+      switch (method) {
+        case Method.add:
+          {
+            if (match(data)) {
+              listener.callback(Method.add, data);
+            }
+            break;
+          }
+        case Method.remove:
+          {
+            listener.callback(Method.remove, data);
+            break;
+          }
+        case Method.update:
+          {
+            if (match(data)) {
+              listener.callback(Method.update, data);
+            } else {
+              listener.callback(Method.remove, [data['_id']]);
+            }
+            break;
+          }
+      }
+      listener.callback(method, data);
+    });
+  }
+
   void _insertData(Map data) {
     if (!data.containsKey('_id')) {
       data['_id'] = ObjectId().toString();
     }
+    _push(Method.add, data);
     this._data.add(data);
   }
 
   int _removeData(Map<dynamic, dynamic> query) {
-    int count = this._data.where(this._match(query)).length;
+    List match = this._data.where(this._match(query)).map((doc) => doc['_id']).toList();
+    int count = match.length;
+    _push(Method.remove, match);
     this._data.removeWhere(this._match(query));
     return count;
   }
@@ -316,6 +352,7 @@ class ObjectDB {
           this._data[i][o] = changes[o];
         }
       }
+      _push(Method.update, this._data[i]);
     }
 
     return count;
@@ -421,8 +458,12 @@ class ObjectDB {
   }
 
   /// get all documents that match [query]
-  Future<List<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query) {
+  Future<List<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query,
+      [listener listener = null]) {
     try {
+      if (listener != null) {
+        this.listeners.add(Listener(query, listener));
+      }
       return this
           ._executionQueue
           .add<List<Map<dynamic, dynamic>>>(() => this._find(query));

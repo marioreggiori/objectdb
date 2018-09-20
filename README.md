@@ -38,8 +38,8 @@ final db = ObjectDB(path);
 db.open();
 
 // insert document into database
-db.insert({'name': {'first': 'Some', 'last': 'Body'}, 'age': 18, 'active': true);
-db.insert({'name': {'first': 'Someone', 'last': 'Else'}, 'age': 25, 'active': false);
+db.insert({'name': {'first': 'Some', 'last': 'Body'}, 'age': 18, 'active': true});
+db.insert({'name': {'first': 'Someone', 'last': 'Else'}, 'age': 25, 'active': false});
 
 // update documents
 db.update({Op.gte: {'age': 80}}, {'active': false});

@@ -434,7 +434,7 @@ class ObjectDB {
     if (value is Map) {
       return this._encode(value);
     }
-    if (value is String || value is int || value is bool || value is List) {
+    if (value is String || value is int || value is double || value is bool || value is List) {
       return value;
     }
     if (value is RegExp) {

@@ -366,9 +366,9 @@ class ObjectDB {
         return this._data.where(match).toList();
       }
       if (filter == Filter.first) {
-        return this._data.firstWhere(match);
+        return this._data.firstWhere(match, orElse: () => null);
       } else {
-        return this._data.lastWhere(match);
+        return this._data.lastWhere(match, orElse: () => null);
       }
     }));
   }

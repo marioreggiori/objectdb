@@ -50,3 +50,7 @@
 
 ## [0.1.14] - 2018-08-09
 * enhanced update queries
+
+## [1.0.7] - 2019-06-22
+* fix error when .first() response is empty
+* add float support

@@ -148,10 +148,11 @@ class ObjectDB {
         dynamic testVal = test;
         for (dynamic o in keyPath) {
           if (!(testVal is Map<dynamic, dynamic>) || !testVal.containsKey(o)) {
-            if (op != Op.or)
+            if (op != Op.or) {
               return false;
-            else
+            } else {
               continue keyloop;
+            }
           }
           testVal = testVal[o];
         }
@@ -434,7 +435,11 @@ class ObjectDB {
     if (value is Map) {
       return this._encode(value);
     }
-    if (value is String || value is int || value is double || value is bool || value is List) {
+    if (value is String ||
+        value is int ||
+        value is double ||
+        value is bool ||
+        value is List) {
       return value;
     }
     if (value is RegExp) {
@@ -459,7 +464,7 @@ class ObjectDB {
 
   /// get all documents that match [query]
   Future<List<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query,
-      [listener listener = null]) {
+      [listener listener]) {
     try {
       if (listener != null) {
         this.listeners.add(Listener(query, listener));
@@ -468,7 +473,7 @@ class ObjectDB {
           ._executionQueue
           .add<List<Map<dynamic, dynamic>>>(() => this._find(query));
     } catch (e) {
-      throw (e);
+      rethrow;
     }
   }
 
@@ -479,7 +484,7 @@ class ObjectDB {
           ._executionQueue
           .add<Map<dynamic, dynamic>>(() => this._find(query, Filter.first));
     } catch (e) {
-      throw (e);
+      rethrow;
     }
   }
 
@@ -490,7 +495,7 @@ class ObjectDB {
           ._executionQueue
           .add<Map<dynamic, dynamic>>(() => this._find(query, Filter.last));
     } catch (e) {
-      throw (e);
+      rethrow;
     }
   }
 

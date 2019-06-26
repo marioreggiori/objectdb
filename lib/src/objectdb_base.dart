@@ -52,6 +52,7 @@ class ObjectDB {
     this._data = [];
     bool firstLine = true;
     await reader
+        .cast<List<int>>()
         .transform(utf8.decoder)
         .transform(LineSplitter())
         .forEach((line) {

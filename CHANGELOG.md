@@ -54,3 +54,6 @@
 ## [1.0.7] - 2019-06-22
 * fix error when .first() response is empty
 * add float support
+
+## [1.0.7+1] - 2019-06-26
+* Prepare for upcoming change to File.openRead()

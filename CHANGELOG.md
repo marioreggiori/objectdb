@@ -57,3 +57,6 @@
 
 ## [1.0.7+1] - 2019-06-26
 * Prepare for upcoming change to File.openRead()
+
+## [1.0.8] - 2019-07-15
+* Add onUpgrade method

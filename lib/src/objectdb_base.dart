@@ -166,7 +166,9 @@ class ObjectDB extends CRUDController {
     this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
 
     if (oldVersion != null) {
-      await onUpgrade(CRUDController(ExecutionQueue(), db: this), oldVersion);
+      var queue = ExecutionQueue();
+      await onUpgrade(CRUDController(queue, db: this), oldVersion);
+      await queue.add<bool>(() => true);
       return await this._tidy();
     }
 

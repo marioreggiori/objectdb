@@ -144,7 +144,7 @@ void main() async {
     db = await ObjectDB(path + 'test.db', clientVersion: 6,
         onUpgrade: (db, oldVersion) async {
       if (oldVersion < 6) {
-        await db.update({}, {
+        db.update({}, {
           Op.increment: {'age': 5}
         });
       }
@@ -158,11 +158,11 @@ void main() async {
     await db.close();
   });
 
-    test('upgrade db again', () async {
+  test('upgrade db again', () async {
     db = await ObjectDB(path + 'test.db', clientVersion: 6,
         onUpgrade: (db, oldVersion) async {
       if (oldVersion < 6) {
-        await db.update({}, {
+        db.update({}, {
           Op.increment: {'age': 5}
         });
       }

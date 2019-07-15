@@ -15,8 +15,8 @@ void main() async {
 
   ObjectDB db;
 
-  db = await ObjectDB(path + 'test.db', clientVersion: 5,
-      onUpgrade: (db, oldVersion) async {
+  db =
+      await ObjectDB(path + 'test.db', v: 5, onUpgrade: (db, oldVersion) async {
     print('Old version: $oldVersion');
     return;
   }).open();
@@ -141,7 +141,7 @@ void main() async {
   });
 
   test('upgrade db', () async {
-    db = await ObjectDB(path + 'test.db', clientVersion: 6,
+    db = await ObjectDB(path + 'test.db', v: 6,
         onUpgrade: (db, oldVersion) async {
       if (oldVersion < 6) {
         db.update({}, {
@@ -159,7 +159,7 @@ void main() async {
   });
 
   test('upgrade db again', () async {
-    db = await ObjectDB(path + 'test.db', clientVersion: 6,
+    db = await ObjectDB(path + 'test.db', v: 6,
         onUpgrade: (db, oldVersion) async {
       if (oldVersion < 6) {
         db.update({}, {

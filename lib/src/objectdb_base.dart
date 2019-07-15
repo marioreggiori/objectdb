@@ -88,7 +88,7 @@ class CRUDController {
 /// Database class
 class ObjectDB extends CRUDController {
   final String path;
-  final int clientVersion;
+  final int v;
   File _file;
   IOSink _writer;
   List<Map<dynamic, dynamic>> _data;
@@ -102,8 +102,7 @@ class ObjectDB extends CRUDController {
 
   List<Listener> listeners = List<Listener>();
 
-  ObjectDB(this.path, {this.clientVersion = 1, this.onUpgrade})
-      : super(_executionQueue) {
+  ObjectDB(this.path, {this.v = 1, this.onUpgrade}) : super(_executionQueue) {
     this.setDB(this);
     this._file = File(this.path);
     Op.values.forEach((Op op) {
@@ -146,9 +145,9 @@ class ObjectDB extends CRUDController {
           if (line.startsWith("\$objectdb")) {
             try {
               _meta = Meta.fromMap(json.decode(line.substring(9)));
-              if (_meta.clientVersion != clientVersion) {
+              if (_meta.clientVersion != v) {
                 oldVersion = _meta.clientVersion;
-                _meta.clientVersion = clientVersion;
+                _meta.clientVersion = v;
               }
             } catch (e) {
               // no valid meta -> default meta

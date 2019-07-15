@@ -9,7 +9,7 @@ Persistent embedded document-oriented NoSQL database for [Dart](https://www.dart
 
 Check out [objectdb_flutter](https://github.com/netz-chat/objectdb_flutter) for reactive store listeners.
 
-**CAUTION** This plugin is still in development. **Use at your own risk**. If you notice any bugs you can [create](https://github.com/netz-chat/objectdb/issues/new 'Create issue') an issue on GitHub. You're also welcome to contribute using [pull requests](https://github.com/netz-chat/objectdb/compare 'Pull request'). Please open an issue before spending time on any pull request.
+If you notice any bugs you can [create](https://github.com/netz-chat/objectdb/issues/new 'Create issue') an issue on GitHub. You're also welcome to contribute using [pull requests](https://github.com/netz-chat/objectdb/compare 'Pull request'). Please open an issue before spending time on any pull request.
 
 
 - [How to use](#how-to-use)

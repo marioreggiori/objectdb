@@ -15,7 +15,11 @@ void main() async {
 
   ObjectDB db;
 
-  db = await ObjectDB(path + 'test.db').open();
+  db = await ObjectDB(path + 'test.db', clientVersion: 5,
+      onUpgrade: (db, oldVersion) async {
+    print('Old version: $oldVersion');
+    return;
+  }).open();
 
   // fetch all documents
   var all = await db.find({});
@@ -134,5 +138,41 @@ void main() async {
 
   test('close db', () async {
     db.close();
+  });
+
+  test('upgrade db', () async {
+    db = await ObjectDB(path + 'test.db', clientVersion: 6,
+        onUpgrade: (db, oldVersion) async {
+      if (oldVersion < 6) {
+        await db.update({}, {
+          Op.increment: {'age': 5}
+        });
+      }
+      return;
+    }).open();
+
+    var res = await db.first({});
+
+    expect(res['age'], 57);
+
+    await db.close();
+  });
+
+    test('upgrade db again', () async {
+    db = await ObjectDB(path + 'test.db', clientVersion: 6,
+        onUpgrade: (db, oldVersion) async {
+      if (oldVersion < 6) {
+        await db.update({}, {
+          Op.increment: {'age': 5}
+        });
+      }
+      return;
+    }).open();
+
+    var res = await db.first({});
+
+    expect(res['age'], 57);
+
+    await db.close();
   });
 }

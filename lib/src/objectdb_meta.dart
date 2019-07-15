@@ -2,9 +2,10 @@ import 'dart:convert';
 
 class Meta {
   final int version;
+  int clientVersion;
 
-  factory Meta(version) {
-    return new Meta.internal(version: version);
+  factory Meta(version, clientVersion) {
+    return new Meta.internal(version: version, clientVersion: clientVersion);
   }
 
   factory Meta.fromMap(Map<String, dynamic> data) {
@@ -13,12 +14,13 @@ class Meta {
       return null;
     }
 
-    return new Meta.internal(version: getKey('version'));
+    return new Meta.internal(
+        version: getKey('version'), clientVersion: getKey('client_version'));
   }
 
-  Meta.internal({this.version});
+  Meta.internal({this.version, this.clientVersion});
 
   String toString() {
-    return json.encode({"version": this.version});
+    return json.encode({"version": this.version, "client_version": this.clientVersion});
   }
 }

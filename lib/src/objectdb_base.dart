@@ -10,21 +10,102 @@ import 'package:objectdb/src/objectdb_objectid.dart';
 import 'package:objectdb/src/objectdb_exceptions.dart';
 import 'package:objectdb/src/objectdb_listener.dart';
 
+class CRUDController {
+  static ExecutionQueue _executionQueue;
+  ObjectDB db;
+
+  CRUDController(ExecutionQueue queue, {this.db}) {
+    _executionQueue = queue;
+  }
+
+  setDB(ObjectDB db) {
+    this.db = db;
+  }
+
+  /// get all documents that match [query]
+  Future<List<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query,
+      [listener listener]) {
+    try {
+      if (listener != null) {
+        db.listeners.add(Listener(query, listener));
+      }
+      return _executionQueue
+          .add<List<Map<dynamic, dynamic>>>(() => db._find(query));
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// get first document that matches [query]
+  Future<Map<dynamic, dynamic>> first(Map<dynamic, dynamic> query) {
+    try {
+      return _executionQueue
+          .add<Map<dynamic, dynamic>>(() => db._find(query, Filter.first));
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// get last document that matches [query]
+  Future<Map<dynamic, dynamic>> last(Map<dynamic, dynamic> query) {
+    try {
+      return _executionQueue
+          .add<Map<dynamic, dynamic>>(() => db._find(query, Filter.last));
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// insert document
+  Future<ObjectId> insert(Map<dynamic, dynamic> doc) {
+    return _executionQueue.add<ObjectId>(() => db._insert(doc));
+  }
+
+  /// insert many documents
+  Future<List<ObjectId>> insertMany(List<Map<dynamic, dynamic>> docs) {
+    return _executionQueue.add<List<ObjectId>>(() {
+      List<ObjectId> _ids = [];
+      docs.forEach((doc) {
+        _ids.add(db._insert(doc));
+      });
+      return _ids;
+    });
+  }
+
+  /// remove documents that match [query]
+  Future<int> remove(query) {
+    // todo: count
+    return _executionQueue.add<int>(() => db._remove(query));
+  }
+
+  /// update database, takes [query], [changes] and an optional [replace] flag
+  Future<int> update(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
+      [bool replace = false]) {
+    return _executionQueue.add<int>(() => db._update(query, changes, replace));
+  }
+}
+
 /// Database class
-class ObjectDB {
+class ObjectDB extends CRUDController {
   final String path;
+  final int clientVersion;
   File _file;
   IOSink _writer;
   List<Map<dynamic, dynamic>> _data;
-  ExecutionQueue _executionQueue = ExecutionQueue();
+  static ExecutionQueue _executionQueue = ExecutionQueue();
   Map<String, Op> _operatorMap = Map();
-  Meta _meta = Meta(1);
+  Meta _meta = Meta(1, 1);
+  CRUDController crudController;
+  Function onUpgrade = (CRUDController db, int oldVersion) async {
+    return;
+  };
 
   List<Listener> listeners = List<Listener>();
 
-  ObjectDB(this.path) {
+  ObjectDB(this.path, {this.clientVersion = 1, this.onUpgrade})
+      : super(_executionQueue) {
+    this.setDB(this);
     this._file = File(this.path);
-
     Op.values.forEach((Op op) {
       _operatorMap[op.toString()] = op;
     });
@@ -32,7 +113,7 @@ class ObjectDB {
 
   /// Opens flat file database
   Future<ObjectDB> open([bool tidy = true]) {
-    return this._executionQueue.add<ObjectDB>(() => this._open(tidy));
+    return _executionQueue.add<ObjectDB>(() => this._open(tidy));
   }
 
   Future _open(bool tidy) async {
@@ -50,6 +131,9 @@ class ObjectDB {
     }
     var reader = this._file.openRead();
     this._data = [];
+
+    int oldVersion = null;
+
     bool firstLine = true;
     await reader
         .cast<List<int>>()
@@ -61,7 +145,11 @@ class ObjectDB {
           firstLine = false;
           if (line.startsWith("\$objectdb")) {
             try {
-              this._meta = Meta.fromMap(json.decode(line.substring(9)));
+              _meta = Meta.fromMap(json.decode(line.substring(9)));
+              if (_meta.clientVersion != clientVersion) {
+                oldVersion = _meta.clientVersion;
+                _meta.clientVersion = clientVersion;
+              }
             } catch (e) {
               // no valid meta -> default meta
             }
@@ -76,6 +164,12 @@ class ObjectDB {
       }
     });
     this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
+
+    if (oldVersion != null) {
+      await onUpgrade( CRUDController(ExecutionQueue(), db: this), oldVersion);
+      return await this._tidy();
+    }
+
     if (tidy) {
       return await this._tidy();
     }
@@ -463,81 +557,14 @@ class ObjectDB {
     return this._updateData(query, changes, replace);
   }
 
-  /// get all documents that match [query]
-  Future<List<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query,
-      [listener listener]) {
-    try {
-      if (listener != null) {
-        this.listeners.add(Listener(query, listener));
-      }
-      return this
-          ._executionQueue
-          .add<List<Map<dynamic, dynamic>>>(() => this._find(query));
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// get first document that matches [query]
-  Future<Map<dynamic, dynamic>> first(Map<dynamic, dynamic> query) {
-    try {
-      return this
-          ._executionQueue
-          .add<Map<dynamic, dynamic>>(() => this._find(query, Filter.first));
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// get last document that matches [query]
-  Future<Map<dynamic, dynamic>> last(Map<dynamic, dynamic> query) {
-    try {
-      return this
-          ._executionQueue
-          .add<Map<dynamic, dynamic>>(() => this._find(query, Filter.last));
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// insert document
-  Future<ObjectId> insert(Map<dynamic, dynamic> doc) {
-    return this._executionQueue.add<ObjectId>(() => this._insert(doc));
-  }
-
-  /// insert many documents
-  Future<List<ObjectId>> insertMany(List<Map<dynamic, dynamic>> docs) {
-    return this._executionQueue.add<List<ObjectId>>(() {
-      List<ObjectId> _ids = [];
-      docs.forEach((doc) {
-        _ids.add(this._insert(doc));
-      });
-      return _ids;
-    });
-  }
-
-  /// remove documents that match [query]
-  Future<int> remove(query) {
-    // todo: count
-    return this._executionQueue.add<int>(() => this._remove(query));
-  }
-
-  /// update database, takes [query], [changes] and an optional [replace] flag
-  Future<int> update(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
-      [bool replace = false]) {
-    return this
-        ._executionQueue
-        .add<int>(() => this._update(query, changes, replace));
-  }
-
   /// 'tidy up' .db file
   Future<ObjectDB> tidy() {
-    return this._executionQueue.add<ObjectDB>(() => this._tidy());
+    return _executionQueue.add<ObjectDB>(() => this._tidy());
   }
 
   /// close db
   Future close() {
-    return this._executionQueue.add(() async {
+    return _executionQueue.add(() async {
       await this._writer.close();
     });
   }

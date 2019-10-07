@@ -162,6 +162,7 @@ class ObjectDB extends CRUDController {
         }
       }
     });
+    if (this._writer != null) await this._writer.close();
     this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
 
     if (oldVersion != null) {

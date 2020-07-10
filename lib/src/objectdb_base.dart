@@ -131,7 +131,7 @@ class ObjectDB extends CRUDController {
     var reader = this._file.openRead();
     this._data = [];
 
-    int oldVersion = null;
+    int oldVersion;
 
     bool firstLine = true;
     await reader

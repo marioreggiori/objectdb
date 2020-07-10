@@ -62,4 +62,7 @@
 * Add onUpgrade method
 
 ## [1.0.9] - 2020-07-10
-* Add onUpgrade method
+* Update deps
+
+## [1.0.9+1] - 2020-07-10
+* Improve code quality

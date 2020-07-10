@@ -60,3 +60,6 @@
 
 ## [1.0.8] - 2019-07-15
 * Add onUpgrade method
+
+## [1.0.9] - 2020-07-10
+* Add onUpgrade method

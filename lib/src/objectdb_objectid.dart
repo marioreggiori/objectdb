@@ -21,8 +21,7 @@ class ObjectId implements Comparable<ObjectId> {
   final int _counter;
 
   /// The timestamp as a [DateTime] instance.
-  DateTime get date =>
-      new DateTime.fromMillisecondsSinceEpoch(_timestamp * 1000);
+  DateTime get date => DateTime.fromMillisecondsSinceEpoch(_timestamp * 1000);
 
   /// The timestamp. (number of seconds since the Unix epoch).
   int get timestamp => _timestamp;
@@ -38,9 +37,9 @@ class ObjectId implements Comparable<ObjectId> {
 
   /// Creates a new object id.
   factory ObjectId() {
-    int timestamp = new DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    int timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     int counter = _nextCounter();
-    return new ObjectId._internal(
+    return ObjectId._internal(
         timestamp, _generatedMachineId, _generatedProcessId, counter);
   }
 
@@ -48,7 +47,7 @@ class ObjectId implements Comparable<ObjectId> {
   /// zeroed out. Used for comparisons or sorting the ObjectId.
   factory ObjectId.fromDate(DateTime date) {
     int timestamp = date.millisecondsSinceEpoch ~/ 1000;
-    return new ObjectId._internal(timestamp, 0, 0, 0);
+    return ObjectId._internal(timestamp, 0, 0, 0);
   }
 
   /// Creates a new instance from a 24-byte hexadecimal string representation.
@@ -56,7 +55,7 @@ class ObjectId implements Comparable<ObjectId> {
   /// Throws an [ArgumentError] if the given hex string is not valid.
   factory ObjectId.fromHexString(String hexString) {
     List<int> b = _parseHexString(hexString);
-    return new ObjectId.fromBytes(b);
+    return ObjectId.fromBytes(b);
   }
 
   /// Creates a new instance from the given byte list.
@@ -64,10 +63,10 @@ class ObjectId implements Comparable<ObjectId> {
   /// Throws an [ArgumentError] if [bytes] is null or its length is not 12.
   factory ObjectId.fromBytes(List<int> bytes) {
     if (bytes == null) {
-      throw new ArgumentError.notNull('bytes');
+      throw ArgumentError.notNull('bytes');
     }
     if (bytes.length != 12) {
-      throw new ArgumentError.value(bytes, 'need 12 bytes');
+      throw ArgumentError.value(bytes, 'need 12 bytes');
     }
 
     int timestamp = _makeInt(bytes[0], bytes[1], bytes[2], bytes[3]);
@@ -75,7 +74,7 @@ class ObjectId implements Comparable<ObjectId> {
     int processId = _makeInt(0, 0, bytes[7], bytes[8]);
     int counter = _makeInt(0, bytes[9], bytes[10], bytes[11]);
 
-    return new ObjectId._internal(timestamp, machineId, processId, counter);
+    return ObjectId._internal(timestamp, machineId, processId, counter);
   }
 
   ObjectId._internal(
@@ -83,7 +82,7 @@ class ObjectId implements Comparable<ObjectId> {
 
   /// Converts this instance into 24-byte hexadecimal string representation.
   String toHexString() {
-    List<String> charCodes = new List<String>(24);
+    List<String> charCodes = List<String>(24);
     int i = 0;
     for (final b in toBytes()) {
       charCodes[i++] = _hexChars[b >> 4 & 0xF];
@@ -95,7 +94,7 @@ class ObjectId implements Comparable<ObjectId> {
   /// Converts to a byte list. Note that the numbers are stored in big-endian
   /// order.
   List<int> toBytes() {
-    List<int> bytes = new List<int>(12);
+    List<int> bytes = List<int>(12);
     bytes[0] = _int3(_timestamp);
     bytes[1] = _int2(_timestamp);
     bytes[2] = _int1(_timestamp);
@@ -147,19 +146,19 @@ class ObjectId implements Comparable<ObjectId> {
   /// [hexString] is null.
   static bool isValid(String hexString) {
     if (hexString == null) {
-      throw new ArgumentError.notNull('hexString');
+      throw ArgumentError.notNull('hexString');
     }
 
     return hexString.length == 24 && _checkForHexRegExp.hasMatch(hexString);
   }
 }
 
-final _checkForHexRegExp = new RegExp(r'^[0-9a-fA-F]{24}$');
+final _checkForHexRegExp = RegExp(r'^[0-9a-fA-F]{24}$');
 
 const _lowerOrderTwoBytes = 0x0000FFFF;
 const _lowerOrderThreeBytes = 0x00FFFFFF;
 
-int _globalCounter = new Random.secure().nextInt(_lowerOrderThreeBytes);
+int _globalCounter = Random.secure().nextInt(_lowerOrderThreeBytes);
 
 int _nextCounter() {
   _globalCounter = (_globalCounter + 1) & _lowerOrderThreeBytes;
@@ -169,12 +168,12 @@ int _nextCounter() {
 int _createMachineId() {
   // FIXME: Build a 3-byte machine piece based on NICs info and
   // fallback to random number only if NICs info is not available.
-  return new Random.secure().nextInt(_lowerOrderThreeBytes);
+  return Random.secure().nextInt(_lowerOrderThreeBytes);
 }
 
 int _createProcessId() {
   // FIXME: Get the real process Id instead of creating a random number.
-  return new Random.secure().nextInt(_lowerOrderTwoBytes);
+  return Random.secure().nextInt(_lowerOrderTwoBytes);
 }
 
 int _generatedMachineId = _createMachineId();
@@ -213,11 +212,11 @@ List<String> _hexChars = [
 
 List<int> _parseHexString(String s) {
   if (!ObjectId.isValid(s)) {
-    throw new ArgumentError.value(
+    throw ArgumentError.value(
         s, 'invalid hexadecimal representation of an ObjectId: [$s]');
   }
 
-  List<int> b = new List<int>(12);
+  List<int> b = List<int>(12);
   for (var i = 0; i < b.length; i++) {
     b[i] = int.parse(s.substring(i * 2, i * 2 + 2), radix: 16);
   }

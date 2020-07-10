@@ -5,7 +5,7 @@ class Meta {
   int clientVersion;
 
   factory Meta(version, clientVersion) {
-    return new Meta.internal(version: version, clientVersion: clientVersion);
+    return Meta.internal(version: version, clientVersion: clientVersion);
   }
 
   factory Meta.fromMap(Map<String, dynamic> data) {
@@ -14,13 +14,14 @@ class Meta {
       return null;
     }
 
-    return new Meta.internal(
+    return Meta.internal(
         version: getKey('version'), clientVersion: getKey('client_version'));
   }
 
   Meta.internal({this.version, this.clientVersion});
 
   String toString() {
-    return json.encode({"version": this.version, "client_version": this.clientVersion});
+    return json.encode(
+        {"version": this.version, "client_version": this.clientVersion});
   }
 }

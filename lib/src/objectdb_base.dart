@@ -501,7 +501,8 @@ class ObjectDB extends CRUDController {
           query[i] is double ||
           query[i] is bool ||
           query[i] is String ||
-          query[i] is List) {
+          query[i] is List ||
+          query[i] == null) {
         prepared[key] = query[i];
       } else {
         throw ObjectDBException("query contains invalid data type '${query[i]?.runtimeType}'");

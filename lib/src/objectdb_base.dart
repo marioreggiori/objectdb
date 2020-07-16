@@ -112,7 +112,7 @@ class ObjectDB extends CRUDController {
 
   /// Opens flat file database
   Future<ObjectDB> open([bool tidy = true]) {
-    return _executionQueue.add<ObjectDB>(() => this._open(tidy));
+    return _executionQueue.add<ObjectDB>(() => this._open(tidy)).catchError((exception) => Future.error(exception));
   }
 
   Future _open(bool tidy) async {
@@ -155,11 +155,7 @@ class ObjectDB extends CRUDController {
             return;
           }
         }
-        try {
-          this._fromFile(line);
-        } catch (e) {
-          // skip invalid line
-        }
+        this._fromFile(line);
       }
     });
     if (this._writer != null) await this._writer.close();
@@ -508,7 +504,7 @@ class ObjectDB extends CRUDController {
           query[i] is List) {
         prepared[key] = query[i];
       } else {
-        throw ObjectDBException('query contains invalid data types');
+        throw ObjectDBException("query contains invalid data type '${query[i]?.runtimeType}'");
       }
     }
     return prepared;

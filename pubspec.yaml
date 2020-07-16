@@ -1,12 +1,12 @@
 name: objectdb
 description: Persistent embedded document-oriented NoSQL database for Dart and Flutter.
-version: 1.0.9+1
+version: 1.0.10
 homepage: https://github.com/marioreggiori/objectdb
 environment:
     sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
-  execution_queue: ^1.0.2
+  execution_queue: ^1.0.3
   deeply: ^1.0.1
 
 dev_dependencies:

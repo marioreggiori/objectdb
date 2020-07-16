@@ -66,3 +66,8 @@
 
 ## [1.0.9+1] - 2020-07-10
 * Improve code quality
+
+## [1.0.10] - 2020-07-16
+* Throw exception when an invalid type is in the database file.
+* Accept null values as valid types and enhanced exception handling
+* Update execution_queue dependency

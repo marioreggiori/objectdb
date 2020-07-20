@@ -112,10 +112,10 @@ class ObjectDB extends CRUDController {
 
   /// Opens flat file database
   Future<ObjectDB> open([bool tidy = true]) {
-    return _executionQueue.add<ObjectDB>(() => this._open(tidy)).catchError((exception) => Future.error(exception));
+    return _executionQueue.add<ObjectDB>(() => this._open(tidy)).catchError((exception) => Future<ObjectDB>.error(exception));
   }
 
-  Future _open(bool tidy) async {
+  Future<ObjectDB> _open(bool tidy) async {
     var backupFile = File(this.path + '.bak');
     if (backupFile.existsSync()) {
       if (this._file.existsSync()) {

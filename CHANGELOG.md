@@ -71,3 +71,7 @@
 * Throw exception when an invalid type is in the database file.
 * Accept null values as valid types and enhanced exception handling
 * Update execution_queue dependency
+
+## [1.0.10+1] - 2020-07-20
+* Additional error handling improvements
+

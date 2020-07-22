@@ -17,7 +17,7 @@ jobs:
           sudo sh -c 'wget -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list'
           sudo apt update
           sudo apt install dart
-          export PATH="$PATH:/usr/lib/dart/bin"
+          echo 'export PATH="$PATH:/usr/lib/dart/bin"' >> ~/.profile
       - name: Get dependencies
         run: pub get
       - name: Run test

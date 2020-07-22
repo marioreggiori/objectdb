@@ -1,15 +1,15 @@
 # ObjectDB
 
 [![Pub](https://img.shields.io/pub/v/objectdb.svg)](https://pub.dartlang.org/packages/objectdb)
-[![license](https://img.shields.io/github/license/netz-chat/objectdb.svg)](https://github.com/netz-chat/objectdb/blob/master/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/netz-chat/objectdb.svg?label=Stars)](https://github.com/netz-chat/objectdb/stargazers)
+[![license](https://img.shields.io/github/license/marioreggiori/objectdb.svg)](https://github.com/marioreggiori/objectdb/blob/master/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/marioreggiori/objectdb.svg?label=Stars)](https://github.com/marioreggiori/objectdb/stargazers)
 
 
 Persistent embedded document-oriented NoSQL database for [Dart](https://www.dartlang.org/) and [Flutter](https://flutter.io/). 100% Dart.
 
-Check out [objectdb_flutter](https://github.com/netz-chat/objectdb_flutter) for reactive store listeners.
+Check out [objectdb_flutter](https://github.com/marioreggiori/objectdb_flutter) for reactive store listeners.
 
-If you notice any bugs you can [create](https://github.com/netz-chat/objectdb/issues/new 'Create issue') an issue on GitHub. You're also welcome to contribute using [pull requests](https://github.com/netz-chat/objectdb/compare 'Pull request'). Please open an issue before spending time on any pull request.
+If you notice any bugs you can [create](https://github.com/marioreggiori/objectdb/issues/new 'Create issue') an issue on GitHub. You're also welcome to contribute using [pull requests](https://github.com/marioreggiori/objectdb/compare 'Pull request'). Please open an issue before spending time on any pull request.
 
 
 - [How to use](#how-to-use)
@@ -58,9 +58,9 @@ await db.close();
 ```
 
 ## Flutter
-Check out [this](https://github.com/netz-chat/flutter_examples/tree/master/objectdb) project for flutter-examples.
+Check out [this](https://github.com/marioreggiori/flutter_examples/tree/master/objectdb) project for flutter-examples.
 
-Check out [objectdb_flutter](https://github.com/netz-chat/objectdb_flutter) for reactive store listeners.
+Check out [objectdb_flutter](https://github.com/marioreggiori/objectdb_flutter) for reactive store listeners.
 
 ## Methods
 - `Future<ObjectDB> db.open([bool tidy = true])` opens database
@@ -162,4 +162,4 @@ var match = (result['active'] == true && (['Florida', 'Virginia', 'New Jersey'].
 - [ ] indexing
 
 ## License
-See [License](https://github.com/netz-chat/objectdb/blob/master/LICENSE)
+See [License](https://github.com/marioreggiori/objectdb/blob/master/LICENSE)

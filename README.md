@@ -3,6 +3,7 @@
 [![Pub](https://img.shields.io/pub/v/objectdb.svg)](https://pub.dartlang.org/packages/objectdb)
 [![license](https://img.shields.io/github/license/marioreggiori/objectdb.svg)](https://github.com/marioreggiori/objectdb/blob/master/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/marioreggiori/objectdb.svg?label=Stars)](https://github.com/marioreggiori/objectdb/stargazers)
+[![Tests](https://github.com/marioreggiori/objectdb/workflows/Tests/badge.svg)](https://github.com/marioreggiori/objectdb/actions?query=workflow%3ATests)
 
 
 Persistent embedded document-oriented NoSQL database for [Dart](https://www.dartlang.org/) and [Flutter](https://flutter.io/). 100% Dart.

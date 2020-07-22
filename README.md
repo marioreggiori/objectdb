@@ -92,7 +92,7 @@ Check out [objectdb_flutter](https://github.com/netz-chat/objectdb_flutter) for 
 // or-operator
 {Op.or:{
     'active': true,
-    Op.inArray: {'group': ['admin', 'moderator']}
+    Op.inList: {'group': ['admin', 'moderator']}
 }}
 
 // not equal to

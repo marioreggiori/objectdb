@@ -10,6 +10,8 @@ import 'package:objectdb/src/objectdb_objectid.dart';
 import 'package:objectdb/src/objectdb_exceptions.dart';
 import 'package:objectdb/src/objectdb_listener.dart';
 
+var keyPathRegExp = RegExp(r"(\w+|\[\w*\])");
+
 class CRUDController {
   static ExecutionQueue _executionQueue;
   ObjectDB db;
@@ -112,7 +114,9 @@ class ObjectDB extends CRUDController {
 
   /// Opens flat file database
   Future<ObjectDB> open([bool tidy = true]) {
-    return _executionQueue.add<ObjectDB>(() => this._open(tidy)).catchError((exception) => Future<ObjectDB>.error(exception));
+    return _executionQueue
+        .add<ObjectDB>(() => this._open(tidy))
+        .catchError((exception) => Future<ObjectDB>.error(exception));
   }
 
   Future<ObjectDB> _open(bool tidy) async {
@@ -237,9 +241,35 @@ class ObjectDB extends CRUDController {
           query[i] = query[i].toString();
         }
 
-        var keyPath = i.split('.');
+        if (!(i is String))
+          throw ObjectDBException("Query key must be string or operator!");
+
+        var keyPath = keyPathRegExp.allMatches(i);
         dynamic testVal = test;
-        for (dynamic o in keyPath) {
+        for (int pathIndex = 0;
+            pathIndex < keyPath.toList().length;
+            pathIndex++) {
+          var o = keyPath.toList()[pathIndex].group(1);
+
+          if (o == "[]" && testVal is List) {
+            var foundMatch = false;
+            var subQuery = {
+              i.substring(keyPath.elementAt(pathIndex).end): query[i]
+            };
+            for (var testValElement in testVal) {
+              if (_match(subQuery, op)(testValElement)) {
+                foundMatch = true;
+              }
+            }
+            if (!foundMatch && op == Op.and) {
+              return false;
+            } else if (foundMatch && op == Op.or) {
+              return true;
+            } else {
+              return foundMatch;
+            }
+          }
+
           if (!(testVal is Map<dynamic, dynamic>) || !testVal.containsKey(o)) {
             if (op != Op.or) {
               return false;
@@ -505,7 +535,8 @@ class ObjectDB extends CRUDController {
           query[i] == null) {
         prepared[key] = query[i];
       } else {
-        throw ObjectDBException("query contains invalid data type '${query[i]?.runtimeType}'");
+        throw ObjectDBException(
+            "query contains invalid data type '${query[i]?.runtimeType}'");
       }
     }
     return prepared;

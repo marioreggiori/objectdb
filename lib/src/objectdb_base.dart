@@ -350,7 +350,7 @@ class ObjectDB extends CRUDController {
         }
       }
 
-      return op == Op.or ? false : true;
+      return op != Op.and ? false : true;
     }
 
     return match;

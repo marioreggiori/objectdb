@@ -8,6 +8,7 @@ class Schema {
     schema = data;
   }
 
+  /// Creates a new `Schema` instance from a `Map`
   factory Schema.fromMap(Map data) {
     Map schema = {};
 
@@ -18,6 +19,7 @@ class Schema {
     return Schema(schema);
   }
 
+  /// Creates a new `Schema` instance from a JSON string
   factory Schema.fromJSON(String raw) {
     Map schema = json.decode(raw);
     return Schema(schema);
@@ -43,6 +45,7 @@ class Schema {
     return true;
   }
 
+  /// Parses the `Schema` to a JSON string
   String toString() {
     return json.encode(this.schema);
   }

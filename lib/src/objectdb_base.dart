@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
@@ -9,6 +10,7 @@ import 'package:objectdb/src/objectdb_meta.dart';
 import 'package:objectdb/src/objectdb_objectid.dart';
 import 'package:objectdb/src/objectdb_exceptions.dart';
 import 'package:objectdb/src/objectdb_listener.dart';
+import 'package:objectdb/src/objectdb_schema.dart';
 
 class CRUDController {
   static ExecutionQueue _executionQueue;
@@ -91,10 +93,11 @@ class ObjectDB extends CRUDController {
   final int v;
   File _file;
   IOSink _writer;
+  Schema _schema;
   List<Map<dynamic, dynamic>> _data;
   static ExecutionQueue _executionQueue = ExecutionQueue();
   Map<String, Op> _operatorMap = Map();
-  Meta _meta = Meta(1, 1);
+  Meta _meta = Meta(1, 1, Schema({}));
   CRUDController crudController;
   Function onUpgrade = (CRUDController db, int oldVersion) async {
     return;
@@ -112,7 +115,9 @@ class ObjectDB extends CRUDController {
 
   /// Opens flat file database
   Future<ObjectDB> open([bool tidy = true]) {
-    return _executionQueue.add<ObjectDB>(() => this._open(tidy)).catchError((exception) => Future<ObjectDB>.error(exception));
+    return _executionQueue
+        .add<ObjectDB>(() => this._open(tidy))
+        .catchError((exception) => Future<ObjectDB>.error(exception));
   }
 
   Future<ObjectDB> _open(bool tidy) async {
@@ -141,10 +146,12 @@ class ObjectDB extends CRUDController {
         .forEach((line) {
       if (line != '') {
         if (firstLine) {
+          // TODO add schema to meta
           firstLine = false;
           if (line.startsWith("\$objectdb")) {
             try {
               _meta = Meta.fromMap(json.decode(line.substring(9)));
+              this._schema = _meta.schema;
               if (_meta.clientVersion != v) {
                 oldVersion = _meta.clientVersion;
                 _meta.clientVersion = v;
@@ -355,10 +362,29 @@ class ObjectDB extends CRUDController {
     });
   }
 
+  // TODO ensure schema or create one
   void _insertData(Map data) {
     if (!data.containsKey('_id')) {
       data['_id'] = ObjectId().toString();
     }
+
+    if (this._data.length == 0) {
+      // first entry; create a new schema
+      log("creating new schema");
+      this._schema = Schema.fromMap(data);
+      log(this._schema.toString());
+    }
+
+    // try {
+    //   Map schema;
+    //   data.forEach((key, value) {
+    //     schema[key] = value.runtimeType.toString();
+    //   });
+    //   log(schema.toString());
+    // } catch (e) {
+    //   log(e);
+    // }
+
     _push(Method.add, data);
     this._data.add(data);
   }
@@ -505,7 +531,8 @@ class ObjectDB extends CRUDController {
           query[i] == null) {
         prepared[key] = query[i];
       } else {
-        throw ObjectDBException("query contains invalid data type '${query[i]?.runtimeType}'");
+        throw ObjectDBException(
+            "query contains invalid data type '${query[i]?.runtimeType}'");
       }
     }
     return prepared;

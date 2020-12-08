@@ -122,14 +122,14 @@ class ObjectDB extends CRUDController {
   }
 
   /// Opens flat file database
-  Future<ObjectDB> open([bool tidy = true]) {
+  Future<ObjectDB> open([bool cleanup = true]) {
     return _executionQueue
-        .add<ObjectDB>(() => this._open(tidy))
+        .add<ObjectDB>(() => this._open(cleanup))
         .catchError((exception) => Future<ObjectDB>.error(exception));
   }
 
-  Future<ObjectDB> _open(bool tidy) async {
-    // restore backup if tidy (cleanup) failed
+  Future<ObjectDB> _open(bool cleanup) async {
+    // restore backup if cleanup failed
     var backupFile = File(this.path + '.bak');
     if (backupFile.existsSync()) {
       if (this._file.existsSync()) {
@@ -185,18 +185,18 @@ class ObjectDB extends CRUDController {
       await onUpgrade(CRUDController(queue, db: this), oldVersion);
       // await onUpgrade
       await queue.add<bool>(() => true);
-      return await this._tidy();
+      return await this._cleanup();
     }
 
-    if (tidy) {
+    if (cleanup) {
       // do cleanup
-      return await this._tidy();
+      return await this._cleanup();
     }
     return this;
   }
 
   // do cleanup (resolve updates, inserts and deletes)
-  Future<ObjectDB> _tidy() async {
+  Future<ObjectDB> _cleanup() async {
     await this._writer.close();
     // create backup file
     await this._file.rename(this.path + '.bak');
@@ -619,9 +619,9 @@ class ObjectDB extends CRUDController {
     return this._updateData(query, changes, replace);
   }
 
-  /// 'tidy up' .db file
-  Future<ObjectDB> tidy() {
-    return _executionQueue.add<ObjectDB>(() => this._tidy());
+  /// cleanup .db file
+  Future<ObjectDB> cleanup() {
+    return _executionQueue.add<ObjectDB>(() => this._cleanup());
   }
 
   /// close db

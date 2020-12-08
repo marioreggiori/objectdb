@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+/// Structure for database-meta-information stored in first line of db file
 class Meta {
   final int version;
   int clientVersion;

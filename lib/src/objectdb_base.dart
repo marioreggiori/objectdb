@@ -17,6 +17,7 @@ class CRUDController {
   ObjectDB db;
 
   CRUDController(ExecutionQueue queue, {this.db}) {
+    // for synchronized database operations
     _executionQueue = queue;
   }
 
@@ -24,9 +25,9 @@ class CRUDController {
     this.db = db;
   }
 
-  /// get all documents that match [query]
+  /// get all documents that match [query] with optional change-[listener]
   Future<List<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query,
-      [listener listener]) {
+      [ListenerCallback listener]) {
     try {
       if (listener != null) {
         db.listeners.add(Listener(query, listener));
@@ -89,15 +90,23 @@ class CRUDController {
 
 /// Database class
 class ObjectDB extends CRUDController {
+  // path to file on filesystem
   final String path;
+  // database version
   final int v;
+  // database file handle
   File _file;
   IOSink _writer;
+  // in memory cache
   List<Map<dynamic, dynamic>> _data;
+  // queue for synchronized database operations
   static ExecutionQueue _executionQueue = ExecutionQueue();
+  // map operator string values to enum values
   Map<String, Op> _operatorMap = Map();
+  // database metadata (saved in first line of file)
   Meta _meta = Meta(1, 1);
   CRUDController crudController;
+  // default (empty) onUpgrade handler
   Function onUpgrade = (CRUDController db, int oldVersion) async {
     return;
   };
@@ -120,6 +129,7 @@ class ObjectDB extends CRUDController {
   }
 
   Future<ObjectDB> _open(bool tidy) async {
+    // restore backup if tidy (cleanup) failed
     var backupFile = File(this.path + '.bak');
     if (backupFile.existsSync()) {
       if (this._file.existsSync()) {
@@ -129,6 +139,7 @@ class ObjectDB extends CRUDController {
       this._file = File(this.path);
     }
 
+    // create database file if not already exist
     if (!this._file.existsSync()) {
       this._file.createSync();
     }
@@ -138,6 +149,7 @@ class ObjectDB extends CRUDController {
     int oldVersion;
 
     bool firstLine = true;
+    // read database to in-memory
     await reader
         .cast<List<int>>()
         .transform(utf8.decoder)
@@ -147,6 +159,7 @@ class ObjectDB extends CRUDController {
         if (firstLine) {
           firstLine = false;
           if (line.startsWith("\$objectdb")) {
+            // parse meta information from first line if exists
             try {
               _meta = Meta.fromMap(json.decode(line.substring(9)));
               if (_meta.clientVersion != v) {
@@ -159,27 +172,33 @@ class ObjectDB extends CRUDController {
             return;
           }
         }
+        // add line to in-memory store
         this._fromFile(line);
       }
     });
     if (this._writer != null) await this._writer.close();
     this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
 
+    // call onUpgrade if new version
     if (oldVersion != null) {
       var queue = ExecutionQueue();
       await onUpgrade(CRUDController(queue, db: this), oldVersion);
+      // await onUpgrade
       await queue.add<bool>(() => true);
       return await this._tidy();
     }
 
     if (tidy) {
+      // do cleanup
       return await this._tidy();
     }
     return this;
   }
 
+  // do cleanup (resolve updates, inserts and deletes)
   Future<ObjectDB> _tidy() async {
     await this._writer.close();
+    // create backup file
     await this._file.rename(this.path + '.bak');
     this._file = File(this.path);
     IOSink writer = this._file.openWrite();
@@ -195,24 +214,29 @@ class ObjectDB extends CRUDController {
     return await this._open(false);
   }
 
+  /// inserts line from file into in-memory store
   void _fromFile(String line) {
     switch (line[0]) {
+      // handle insert
       case '+':
         {
           this._insertData(json.decode(line.substring(1)));
           break;
         }
+      // handle remove
       case '-':
         {
           this._removeData(this._decode(json.decode(line.substring(1))));
           break;
         }
+      // handle update
       case '~':
         {
           var u = json.decode(line.substring(1));
           this._updateData(this._decode(u['q']), this._decode(u['c']), u['r']);
           break;
         }
+      // insert entry
       case '{':
         {
           this._insertData(json.decode(line));
@@ -221,10 +245,13 @@ class ObjectDB extends CRUDController {
     }
   }
 
+  /// returns matcher for given [query] and optional [op]
   Function _match(query, [Op op = Op.and]) {
     bool match(Map<dynamic, dynamic> test) {
+      // iterate all query elements
       keyloop:
       for (dynamic i in query.keys) {
+        // if element is operator -> create fork-matcher
         if (i is Op) {
           bool match = this._match(query[i], i)(test);
 
@@ -244,6 +271,7 @@ class ObjectDB extends CRUDController {
         if (!(i is String))
           throw ObjectDBException("Query key must be string or operator!");
 
+        // split path to array
         var keyPath = keyPathRegExp.allMatches(i);
         dynamic testVal = test;
         for (int pathIndex = 0;
@@ -356,6 +384,7 @@ class ObjectDB extends CRUDController {
     return match;
   }
 
+  /// check all listener and notify matches
   void _push(Method method, dynamic data) {
     listeners.forEach((listener) {
       Function match = _match(listener.query);
@@ -385,6 +414,7 @@ class ObjectDB extends CRUDController {
     });
   }
 
+  /// internal insert
   void _insertData(Map data) {
     if (!data.containsKey('_id')) {
       data['_id'] = ObjectId().toString();
@@ -393,6 +423,7 @@ class ObjectDB extends CRUDController {
     this._data.add(data);
   }
 
+  /// internal remove
   int _removeData(Map<dynamic, dynamic> query) {
     List match =
         this._data.where(this._match(query)).map((doc) => doc['_id']).toList();
@@ -402,6 +433,7 @@ class ObjectDB extends CRUDController {
     return count;
   }
 
+  /// internal update
   int _updateData(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
       bool replace) {
     int count = 0;

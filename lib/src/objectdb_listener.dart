@@ -1,10 +1,12 @@
 enum Method { add, remove, update }
 
-typedef listener(Method method, dynamic data);
+typedef ListenerCallback(Method method, dynamic data);
 
+/// ObjectDB query listener
+/// Calls [callback] when entry matched by [query] is changed/added/removed
 class Listener {
   final Map<dynamic, dynamic> query;
-  final listener callback;
+  final ListenerCallback callback;
 
   Listener(this.query, this.callback);
 }

@@ -91,7 +91,7 @@ Check out [objectdb_flutter](https://github.com/marioreggiori/objectdb_flutter) 
 }}
 
 // or-operator
-{Op.or:{
+{Op.or: {
     'active': true,
     Op.inList: {'group': ['admin', 'moderator']}
 }}

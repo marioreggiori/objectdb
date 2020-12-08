@@ -78,3 +78,5 @@
 ## [1.1.0-dev] - 2020-07-23
 * Add basic array querying
 
+## [1.1.1] - 2020-12-08
+* Add basic array querying

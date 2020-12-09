@@ -249,13 +249,13 @@ class ObjectDB extends CRUDController {
 
   /// returns matcher for given [query] and optional [op] (recursively)
   Function _match(query, [Op op = Op.and]) {
-    bool match(Map<dynamic, dynamic> test) {
+    bool match(Map<dynamic, dynamic> testVal) {
       // iterate all query elements
       keyloop:
       for (dynamic i in query.keys) {
         // if element is operator -> create fork-matcher
         if (i is Op) {
-          bool match = this._match(query[i], i)(test);
+          bool match = this._match(query[i], i)(testVal);
           // if operator is conjunction and match found -> test next
           if (op == Op.and && match) continue;
           // if operator is conjunction and no match found -> data does not match
@@ -281,14 +281,16 @@ class ObjectDB extends CRUDController {
 
         // split keyPath to array
         var keyPath = keyPathRegExp.allMatches(i);
-        dynamic testVal = test;
+        dynamic testValCopy = testVal;
         for (var keyPathSegment in keyPath) {
-          var o = keyPathSegment.group(1);
+          var keyPathSegmentAsString = keyPathSegment.group(1);
 
-          if (o == "[]" && testVal is List) {
+          // handle list query
+          if (keyPathSegmentAsString == "[]" && testValCopy is List) {
             var foundMatch = false;
             var subQuery = {i.substring(keyPathSegment.end): query[i]};
-            for (var testValElement in testVal) {
+            // test all list elements for matches
+            for (var testValElement in testValCopy) {
               if (_match(subQuery, op)(testValElement)) {
                 foundMatch = true;
               }
@@ -302,80 +304,83 @@ class ObjectDB extends CRUDController {
             }
           }
 
-          if (!(testVal is Map<dynamic, dynamic>) || !testVal.containsKey(o)) {
+          // check if value is map and contains keyPathSegment as key
+          if (!(testValCopy is Map<dynamic, dynamic>) ||
+              !testValCopy.containsKey(keyPathSegmentAsString)) {
             if (op != Op.or) {
               return false;
             } else {
               continue keyloop;
             }
           }
-          testVal = testVal[o];
+          testValCopy = testValCopy[keyPathSegmentAsString];
         }
 
+        // skip if type mismatch
         if (op != Op.inList &&
             op != Op.notInList &&
             (!(query[i] is RegExp) && (op != Op.and && op != Op.or)) &&
-            testVal.runtimeType != query[i].runtimeType) continue;
+            testValCopy.runtimeType != query[i].runtimeType) continue;
 
         switch (op) {
           case Op.and:
           case Op.not:
             {
               if (query[i] is RegExp) {
-                if (!query[i].hasMatch(testVal)) return false;
+                if (!query[i].hasMatch(testValCopy)) return false;
                 break;
               }
-              if (testVal != query[i]) return false;
+              if (testValCopy != query[i]) return false;
               break;
             }
           case Op.or:
             {
               if (query[i] is RegExp) {
-                if (query[i].hasMatch(testVal)) return true;
+                if (query[i].hasMatch(testValCopy)) return true;
                 break;
               }
-              if (testVal == query[i]) return true;
+              if (testValCopy == query[i]) return true;
               break;
             }
           case Op.gt:
             {
-              if (testVal is String) {
-                return testVal.compareTo(query[i]) > 0;
+              if (testValCopy is String) {
+                return testValCopy.compareTo(query[i]) > 0;
               }
-              return testVal > query[i];
+              return testValCopy > query[i];
             }
           case Op.gte:
             {
-              if (testVal is String) {
-                return testVal.compareTo(query[i]) >= 0;
+              if (testValCopy is String) {
+                return testValCopy.compareTo(query[i]) >= 0;
               }
-              return testVal >= query[i];
+              return testValCopy >= query[i];
             }
           case Op.lt:
             {
-              if (testVal is String) {
-                return testVal.compareTo(query[i]) < 0;
+              if (testValCopy is String) {
+                return testValCopy.compareTo(query[i]) < 0;
               }
-              return testVal < query[i];
+              return testValCopy < query[i];
             }
           case Op.lte:
             {
-              if (testVal is String) {
-                return testVal.compareTo(query[i]) <= 0;
+              if (testValCopy is String) {
+                return testValCopy.compareTo(query[i]) <= 0;
               }
-              return testVal <= query[i];
+              return testValCopy <= query[i];
             }
           case Op.ne:
             {
-              return testVal != query[i];
+              return testValCopy != query[i];
             }
           case Op.inList:
             {
-              return (query[i] is List) && query[i].contains(testVal);
+              return (query[i] is List) && query[i].contains(testValCopy);
             }
           case Op.notInList:
             {
-              return (query[i] is List) && !query[i].contains(testVal);
+              return (query[i] is List) && !query[i].contains(testValCopy);
             }
           default:
             {}
@@ -440,66 +445,83 @@ class ObjectDB extends CRUDController {
   /// internal update
   int _updateData(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
       bool replace) {
+    // count updated entries
     int count = 0;
+    // create matcher for query
     var matcher = this._match(query);
+    // iterate all data
     for (var i = 0; i < this._data.length; i++) {
+      // skip if query does not match
       if (!matcher(this._data[i])) continue;
       count++;
 
+      // clear entry if replace is true
       if (replace) this._data[i] = Map<dynamic, dynamic>();
 
-      for (var o in changes.keys) {
-        if (o is Op) {
-          for (String p in changes[o].keys) {
+      // apply changes one after another
+      for (var keyOfChanges in changes.keys) {
+        if (keyOfChanges is Op) {
+          for (String p in changes[keyOfChanges].keys) {
             var keyPath = p.split('.');
-            switch (o) {
+            switch (keyOfChanges) {
+              // set value in entry
               case Op.set:
                 {
-                  this._data[i] = updateDeeply(
-                      keyPath, this._data[i], (value) => changes[o][p]);
+                  this._data[i] = updateDeeply(keyPath, this._data[i],
+                      (value) => changes[keyOfChanges][p]);
                   break;
                 }
+              // remove path from entry
               case Op.unset:
                 {
-                  if (changes[o][p] == true) {
+                  if (changes[keyOfChanges][p] == true) {
                     this._data[i] = removeDeeply(keyPath, this._data[i]);
                   }
                   break;
                 }
+              // set max int value
               case Op.max:
                 {
                   this._data[i] = updateDeeply(
                       keyPath,
                       this._data[i],
-                      (value) => value > changes[o][p] ? changes[o][p] : value,
+                      (value) => value > changes[keyOfChanges][p]
+                          ? changes[keyOfChanges][p]
+                          : value,
                       0);
                   break;
                 }
+              // set min int value
               case Op.min:
                 {
                   this._data[i] = updateDeeply(
                       keyPath,
                       this._data[i],
-                      (value) => value < changes[o][p] ? changes[o][p] : value,
+                      (value) => value < changes[keyOfChanges][p]
+                          ? changes[keyOfChanges][p]
+                          : value,
                       0);
                   break;
                 }
+              // increment value at path by x
               case Op.increment:
                 {
                   this._data[i] = updateDeeply(keyPath, this._data[i],
-                      (value) => value += changes[o][p], 0);
+                      (value) => value += changes[keyOfChanges][p], 0);
                   break;
                 }
+              // multiply value at path by x
               case Op.multiply:
                 {
                   this._data[i] = updateDeeply(keyPath, this._data[i],
-                      (value) => value *= changes[o][p], 0);
+                      (value) => value *= changes[keyOfChanges][p], 0);
                   break;
                 }
+              // rename path to new path
               case Op.rename:
                 {
-                  this._data[i] =
-                      renameDeeply(keyPath, changes[o][p], this._data[i]);
+                  this._data[i] = renameDeeply(
+                      keyPath, changes[keyOfChanges][p], this._data[i]);
                   break;
                 }
               default:
@@ -509,7 +531,8 @@ class ObjectDB extends CRUDController {
             }
           }
         } else {
-          this._data[i][o] = changes[o];
+          // set new value
+          this._data[i][keyOfChanges] = changes[keyOfChanges];
         }
       }
       _push(Method.update, this._data[i]);
@@ -518,7 +541,7 @@ class ObjectDB extends CRUDController {
     return count;
   }
 
-  /// Find data in cached database object
+  /// Find data in in-memory data copy
   Future _find(query, [Filter filter = Filter.all]) async {
     return Future.sync((() {
       var match = this._match(query);

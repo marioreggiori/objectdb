@@ -202,7 +202,9 @@ class ObjectDB extends CRUDController {
     await this._file.rename(this.path + '.bak');
     this._file = File(this.path);
     IOSink writer = this._file.openWrite();
+    // add database meta data to first line
     writer.writeln('\$objectdb' + this._meta.toString());
+    // write db entries to file
     writer.writeAll(this._data.map((data) => json.encode(data)), '\n');
     writer.write('\n');
     await writer.flush();
@@ -245,7 +247,7 @@ class ObjectDB extends CRUDController {
     }
   }
 
-  /// returns matcher for given [query] and optional [op]
+  /// returns matcher for given [query] and optional [op] (recursively)
   Function _match(query, [Op op = Op.and]) {
     bool match(Map<dynamic, dynamic> test) {
       // iterate all query elements
@@ -254,16 +256,22 @@ class ObjectDB extends CRUDController {
         // if element is operator -> create fork-matcher
         if (i is Op) {
           bool match = this._match(query[i], i)(test);
-
+          // if operator is conjunction and match found -> test next
           if (op == Op.and && match) continue;
+          // if operator is conjunction and no match found -> data does not match
           if (op == Op.and && !match) return false;
 
+          // if operator is disjunction and no match found -> test next
           if (op == Op.or && !match) continue;
+          // if operator is disjunction and matche found -> data does match
           if (op == Op.or && match) return true;
 
+          // if (not-operator and no match) or (not not-operator and match) -> true
+          // else -> false
           return Op.not == op ? !match : match;
         }
 
+        // convert objectdb to string
         if (query[i] is ObjectId) {
           query[i] = query[i].toString();
         }
@@ -271,19 +279,15 @@ class ObjectDB extends CRUDController {
         if (!(i is String))
           throw ObjectDBException("Query key must be string or operator!");
 
-        // split path to array
+        // split keyPath to array
         var keyPath = keyPathRegExp.allMatches(i);
         dynamic testVal = test;
-        for (int pathIndex = 0;
-            pathIndex < keyPath.toList().length;
-            pathIndex++) {
-          var o = keyPath.toList()[pathIndex].group(1);
+        for (var keyPathSegment in keyPath) {
+          var o = keyPathSegment.group(1);
 
           if (o == "[]" && testVal is List) {
             var foundMatch = false;
-            var subQuery = {
-              i.substring(keyPath.elementAt(pathIndex).end): query[i]
-            };
+            var subQuery = {i.substring(keyPathSegment.end): query[i]};
             for (var testValElement in testVal) {
               if (_match(subQuery, op)(testValElement)) {
                 foundMatch = true;

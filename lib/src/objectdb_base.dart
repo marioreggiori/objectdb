@@ -9,67 +9,68 @@ import 'package:objectdb/src/objectdb_meta.dart';
 import 'package:objectdb/src/objectdb_objectid.dart';
 import 'package:objectdb/src/objectdb_exceptions.dart';
 import 'package:objectdb/src/objectdb_listener.dart';
+import 'package:objectdb/src/objectdb_schema.dart';
 
 var keyPathRegExp = RegExp(r"(\w+|\[\w*\])");
 
-class CRUDController {
+class CRUDController<T> {
   static ExecutionQueue _executionQueue;
-  ObjectDB db;
+  _ObjectDB db;
 
   CRUDController(ExecutionQueue queue, {this.db}) {
     // for synchronized database operations
     _executionQueue = queue;
   }
 
-  setDB(ObjectDB db) {
+  setDB(_ObjectDB db) {
     this.db = db;
   }
 
   /// get all documents that match [query] with optional change-[listener]
-  Future<List<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query,
+  Future<List<T>> find(Map<dynamic, dynamic> query,
       [ListenerCallback listener]) {
     try {
       if (listener != null) {
         db.listeners.add(Listener(query, listener));
       }
-      return _executionQueue
-          .add<List<Map<dynamic, dynamic>>>(() => db._find(query));
+      return _executionQueue.add<List<T>>(
+          () async => (await db._find(query)).map<T>(db.createItem).toList());
     } catch (e) {
       rethrow;
     }
   }
 
   /// get first document that matches [query]
-  Future<Map<dynamic, dynamic>> first(Map<dynamic, dynamic> query) {
+  Future<T> first(Map<dynamic, dynamic> query) {
     try {
-      return _executionQueue
-          .add<Map<dynamic, dynamic>>(() => db._find(query, Filter.first));
+      return _executionQueue.add<T>(
+          () async => db.createItem(await db._find(query, Filter.first)));
     } catch (e) {
       rethrow;
     }
   }
 
   /// get last document that matches [query]
-  Future<Map<dynamic, dynamic>> last(Map<dynamic, dynamic> query) {
+  Future<T> last(Map<dynamic, dynamic> query) {
     try {
-      return _executionQueue
-          .add<Map<dynamic, dynamic>>(() => db._find(query, Filter.last));
+      return _executionQueue.add<T>(
+          () async => db.createItem(await db._find(query, Filter.last)));
     } catch (e) {
       rethrow;
     }
   }
 
   /// insert document
-  Future<ObjectId> insert(Map<dynamic, dynamic> doc) {
-    return _executionQueue.add<ObjectId>(() => db._insert(doc));
+  Future<ObjectId> insert(T doc) {
+    return _executionQueue.add<ObjectId>(() => db._insert(db.itemToMap(doc)));
   }
 
   /// insert many documents
-  Future<List<ObjectId>> insertMany(List<Map<dynamic, dynamic>> docs) {
+  Future<List<ObjectId>> insertMany(List<T> docs) {
     return _executionQueue.add<List<ObjectId>>(() {
       List<ObjectId> _ids = [];
       docs.forEach((doc) {
-        _ids.add(db._insert(doc));
+        _ids.add(db._insert(db.itemToMap(doc)));
       });
       return _ids;
     });
@@ -88,8 +89,32 @@ class CRUDController {
   }
 }
 
+typedef SchemaDBItemCreator<S> = S Function(Map<dynamic, dynamic>);
+
+class SchemaDB<T extends Schema> extends _ObjectDB<T> {
+  SchemaDBItemCreator<T> _creator;
+  SchemaDB(path, this._creator, {v = 1, onUpgrade})
+      : super(path, v: v, onUpgrade: onUpgrade);
+
+  @override
+  T createItem(Map data) => _creator(data);
+
+  @override
+  Map<dynamic, dynamic> itemToMap(T item) => item.toMapWithId();
+}
+
+class ObjectDB extends _ObjectDB<Map<dynamic, dynamic>> {
+  ObjectDB(path, {v = 1, onUpgrade}) : super(path, v: v, onUpgrade: onUpgrade);
+
+  @override
+  Map<dynamic, dynamic> createItem(Map data) => data;
+
+  @override
+  Map<dynamic, dynamic> itemToMap(Map<dynamic, dynamic> item) => item;
+}
+
 /// Database class
-class ObjectDB extends CRUDController {
+class _ObjectDB<T> extends CRUDController<T> {
   // path to file on filesystem
   final String path;
   // database version
@@ -113,7 +138,7 @@ class ObjectDB extends CRUDController {
 
   List<Listener> listeners = List<Listener>();
 
-  ObjectDB(this.path, {this.v = 1, this.onUpgrade}) : super(_executionQueue) {
+  _ObjectDB(this.path, {this.v = 1, this.onUpgrade}) : super(_executionQueue) {
     this.setDB(this);
     this._file = File(this.path);
     Op.values.forEach((Op op) {
@@ -121,14 +146,22 @@ class ObjectDB extends CRUDController {
     });
   }
 
-  /// Opens flat file database
-  Future<ObjectDB> open([bool cleanup = true]) {
-    return _executionQueue
-        .add<ObjectDB>(() => this._open(cleanup))
-        .catchError((exception) => Future<ObjectDB>.error(exception));
+  T createItem(Map<dynamic, dynamic> data) {
+    throw UnimplementedError();
   }
 
-  Future<ObjectDB> _open(bool cleanup) async {
+  Map<dynamic, dynamic> itemToMap(T item) {
+    UnimplementedError();
+  }
+
+  /// Opens flat file database
+  Future<_ObjectDB> open([bool cleanup = true]) {
+    return _executionQueue
+        .add<_ObjectDB>(() => this._open(cleanup))
+        .catchError((exception) => Future<_ObjectDB>.error(exception));
+  }
+
+  Future<_ObjectDB> _open(bool cleanup) async {
     // restore backup if cleanup failed
     var backupFile = File(this.path + '.bak');
     if (backupFile.existsSync()) {
@@ -196,7 +229,7 @@ class ObjectDB extends CRUDController {
   }
 
   // do cleanup (resolve updates, inserts and deletes)
-  Future<ObjectDB> _cleanup() async {
+  Future<_ObjectDB> _cleanup() async {
     await this._writer.close();
     // create backup file
     await this._file.rename(this.path + '.bak');
@@ -647,8 +680,8 @@ class ObjectDB extends CRUDController {
   }
 
   /// cleanup .db file
-  Future<ObjectDB> cleanup() {
-    return _executionQueue.add<ObjectDB>(() => this._cleanup());
+  Future<_ObjectDB> cleanup() {
+    return _executionQueue.add<_ObjectDB>(() => this._cleanup());
   }
 
   /// close db

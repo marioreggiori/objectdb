@@ -1,0 +1,5 @@
+$objectdb{"version":1,"client_version":1}
+
++{"username":"marioreggiori","email":"mario@fosscom.org","birthyear":852073200000,"_id":"5fd2482133c3e23851fd4082"}
++{"username":"flexwie","email":"felix@fosscom.org","birthyear":852073200000,"_id":"5fd2482133c3e23851fd4083"}
+~{"q":{"username":"flexwie"},"c":{"birthyear":852073200000},"r":false}

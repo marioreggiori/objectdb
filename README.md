@@ -51,8 +51,8 @@ db.remove({'active': false});
 // search documents in database
 var result = await db.find({'active': true, 'name.first': 'Some'});
 
-// cleanup the db file
-db.cleanup();
+// 'tidy up' the db file
+db.tidy();
 
 // close db
 await db.close();
@@ -64,8 +64,8 @@ Check out [this](https://github.com/marioreggiori/flutter_examples/tree/master/o
 Check out [objectdb_flutter](https://github.com/marioreggiori/objectdb_flutter) for reactive store listeners.
 
 ## Methods
-- `Future<ObjectDB> db.open([bool cleanup = true])` opens database
-- `Future<void> db.cleanup()` cleanup the .db file
+- `Future<ObjectDB> db.open([bool tidy = true])` opens database
+- `Future<void> db.tidy()` 'tidy up' the .db file
 - `Future<void> db.close()` closes database (should be awaited to ensure all queries have been executed)
 
 ### find
@@ -91,7 +91,7 @@ Check out [objectdb_flutter](https://github.com/marioreggiori/objectdb_flutter) 
 }}
 
 // or-operator
-{Op.or: {
+{Op.or:{
     'active': true,
     Op.inList: {'group': ['admin', 'moderator']}
 }}

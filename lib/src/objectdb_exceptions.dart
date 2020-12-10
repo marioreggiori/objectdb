@@ -1,4 +1,3 @@
-/// ObjectDB exception wrapper
 class ObjectDBException implements Exception {
   final message;
 

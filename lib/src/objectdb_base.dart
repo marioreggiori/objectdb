@@ -12,63 +12,66 @@ import 'package:objectdb/src/objectdb_exceptions.dart';
 import 'package:objectdb/src/objectdb_listener.dart';
 import 'package:objectdb/src/objectdb_schema.dart';
 
-class CRUDController {
+var keyPathRegExp = RegExp(r"(\w+|\[\w*\])");
+
+class CRUDController<T> {
   static ExecutionQueue _executionQueue;
-  ObjectDB db;
+  _ObjectDB db;
 
   CRUDController(ExecutionQueue queue, {this.db}) {
+    // for synchronized database operations
     _executionQueue = queue;
   }
 
-  setDB(ObjectDB db) {
+  setDB(_ObjectDB db) {
     this.db = db;
   }
 
-  /// get all documents that match [query]
-  Future<List<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query,
-      [listener listener]) {
+  /// get all documents that match [query] with optional change-[listener]
+  Future<List<T>> find(Map<dynamic, dynamic> query,
+      [ListenerCallback listener]) {
     try {
       if (listener != null) {
         db.listeners.add(Listener(query, listener));
       }
-      return _executionQueue
-          .add<List<Map<dynamic, dynamic>>>(() => db._find(query));
+      return _executionQueue.add<List<T>>(
+          () async => (await db._find(query)).map<T>(db.createItem).toList());
     } catch (e) {
       rethrow;
     }
   }
 
   /// get first document that matches [query]
-  Future<Map<dynamic, dynamic>> first(Map<dynamic, dynamic> query) {
+  Future<T> first(Map<dynamic, dynamic> query) {
     try {
-      return _executionQueue
-          .add<Map<dynamic, dynamic>>(() => db._find(query, Filter.first));
+      return _executionQueue.add<T>(
+          () async => db.createItem(await db._find(query, Filter.first)));
     } catch (e) {
       rethrow;
     }
   }
 
   /// get last document that matches [query]
-  Future<Map<dynamic, dynamic>> last(Map<dynamic, dynamic> query) {
+  Future<T> last(Map<dynamic, dynamic> query) {
     try {
-      return _executionQueue
-          .add<Map<dynamic, dynamic>>(() => db._find(query, Filter.last));
+      return _executionQueue.add<T>(
+          () async => db.createItem(await db._find(query, Filter.last)));
     } catch (e) {
       rethrow;
     }
   }
 
   /// insert document
-  Future<ObjectId> insert(Map<dynamic, dynamic> doc) {
-    return _executionQueue.add<ObjectId>(() => db._insert(doc));
+  Future<ObjectId> insert(T doc) {
+    return _executionQueue.add<ObjectId>(() => db._insert(db.itemToMap(doc)));
   }
 
   /// insert many documents
-  Future<List<ObjectId>> insertMany(List<Map<dynamic, dynamic>> docs) {
+  Future<List<ObjectId>> insertMany(List<T> docs) {
     return _executionQueue.add<List<ObjectId>>(() {
       List<ObjectId> _ids = [];
       docs.forEach((doc) {
-        _ids.add(db._insert(doc));
+        _ids.add(db._insert(db.itemToMap(doc)));
       });
       return _ids;
     });
@@ -87,25 +90,59 @@ class CRUDController {
   }
 }
 
+typedef SchemaDBItemCreator<S> = S Function(Map<dynamic, dynamic>);
+
+class SchemaDB<T extends Schema> extends _ObjectDB<T> {
+  SchemaDBItemCreator<T> _creator;
+  SchemaDB(path, this._creator, {v = 1, onUpgrade})
+      : super(path, v: v, onUpgrade: onUpgrade);
+
+  @override
+  T createItem(Map data) => _creator(data);
+
+  @override
+  Map<dynamic, dynamic> itemToMap(T item) => item.toMapWithId();
+}
+
+class ObjectDB extends _ObjectDB<Map<dynamic, dynamic>> {
+  ObjectDB(path, {v = 1, onUpgrade}) : super(path, v: v, onUpgrade: onUpgrade);
+
+  @override
+  Map<dynamic, dynamic> createItem(Map data) => data;
+
+  @override
+  Map<dynamic, dynamic> itemToMap(Map<dynamic, dynamic> item) => item;
+}
+
 /// Database class
-class ObjectDB extends CRUDController {
+class _ObjectDB<T> extends CRUDController<T> {
+  // path to file on filesystem
   final String path;
+  // database version
   final int v;
+  // database file handle
   File _file;
   IOSink _writer;
+  // in memory cache
   Schema _schema;
   List<Map<dynamic, dynamic>> _data;
+  // queue for synchronized database operations
   static ExecutionQueue _executionQueue = ExecutionQueue();
+  // map operator string values to enum values
   Map<String, Op> _operatorMap = Map();
+
+  // database metadata (saved in first line of file)
+  Meta _meta = Meta(1, 1);
   Meta _meta = Meta(1, 1, Schema({}));
   CRUDController crudController;
+  // default (empty) onUpgrade handler
   Function onUpgrade = (CRUDController db, int oldVersion) async {
     return;
   };
 
   List<Listener> listeners = List<Listener>();
 
-  ObjectDB(this.path, {this.v = 1, this.onUpgrade}) : super(_executionQueue) {
+  _ObjectDB(this.path, {this.v = 1, this.onUpgrade}) : super(_executionQueue) {
     this.setDB(this);
     this._file = File(this.path);
     Op.values.forEach((Op op) {
@@ -113,14 +150,27 @@ class ObjectDB extends CRUDController {
     });
   }
 
+  T createItem(Map<dynamic, dynamic> data) {
+    throw UnimplementedError();
+  }
+
+  Map<dynamic, dynamic> itemToMap(T item) {
+    UnimplementedError();
+  }
+
   /// Opens flat file database
+  Future<_ObjectDB> open([bool cleanup = true]) {
+    return _executionQueue
+        .add<_ObjectDB>(() => this._open(cleanup))
+        .catchError((exception) => Future<_ObjectDB>.error(exception));
   Future<ObjectDB> open([bool tidy = true]) {
     return _executionQueue
         .add<ObjectDB>(() => this._open(tidy))
         .catchError((exception) => Future<ObjectDB>.error(exception));
   }
 
-  Future<ObjectDB> _open(bool tidy) async {
+  Future<_ObjectDB> _open(bool cleanup) async {
+    // restore backup if cleanup failed
     var backupFile = File(this.path + '.bak');
     if (backupFile.existsSync()) {
       if (this._file.existsSync()) {
@@ -130,6 +180,7 @@ class ObjectDB extends CRUDController {
       this._file = File(this.path);
     }
 
+    // create database file if not already exist
     if (!this._file.existsSync()) {
       this._file.createSync();
     }
@@ -139,6 +190,7 @@ class ObjectDB extends CRUDController {
     int oldVersion;
 
     bool firstLine = true;
+    // read database to in-memory
     await reader
         .cast<List<int>>()
         .transform(utf8.decoder)
@@ -149,6 +201,7 @@ class ObjectDB extends CRUDController {
           // TODO add schema to meta
           firstLine = false;
           if (line.startsWith("\$objectdb")) {
+            // parse meta information from first line if exists
             try {
               _meta = Meta.fromMap(json.decode(line.substring(9)));
               this._schema = _meta.schema;
@@ -162,31 +215,39 @@ class ObjectDB extends CRUDController {
             return;
           }
         }
+        // add line to in-memory store
         this._fromFile(line);
       }
     });
     if (this._writer != null) await this._writer.close();
     this._writer = this._file.openWrite(mode: FileMode.writeOnlyAppend);
 
+    // call onUpgrade if new version
     if (oldVersion != null) {
       var queue = ExecutionQueue();
       await onUpgrade(CRUDController(queue, db: this), oldVersion);
+      // await onUpgrade
       await queue.add<bool>(() => true);
-      return await this._tidy();
+      return await this._cleanup();
     }
 
-    if (tidy) {
-      return await this._tidy();
+    if (cleanup) {
+      // do cleanup
+      return await this._cleanup();
     }
     return this;
   }
 
-  Future<ObjectDB> _tidy() async {
+  // do cleanup (resolve updates, inserts and deletes)
+  Future<_ObjectDB> _cleanup() async {
     await this._writer.close();
+    // create backup file
     await this._file.rename(this.path + '.bak');
     this._file = File(this.path);
     IOSink writer = this._file.openWrite();
+    // add database meta data to first line
     writer.writeln('\$objectdb' + this._meta.toString());
+    // write db entries to file
     writer.writeAll(this._data.map((data) => json.encode(data)), '\n');
     writer.write('\n');
     await writer.flush();
@@ -198,24 +259,29 @@ class ObjectDB extends CRUDController {
     return await this._open(false);
   }
 
+  /// inserts line from file into in-memory store
   void _fromFile(String line) {
     switch (line[0]) {
+      // handle insert
       case '+':
         {
           this._insertData(json.decode(line.substring(1)));
           break;
         }
+      // handle remove
       case '-':
         {
           this._removeData(this._decode(json.decode(line.substring(1))));
           break;
         }
+      // handle update
       case '~':
         {
           var u = json.decode(line.substring(1));
           this._updateData(this._decode(u['q']), this._decode(u['c']), u['r']);
           break;
         }
+      // insert entry
       case '{':
         {
           this._insertData(json.decode(line));
@@ -224,115 +290,153 @@ class ObjectDB extends CRUDController {
     }
   }
 
+  /// returns matcher for given [query] and optional [op] (recursively)
   Function _match(query, [Op op = Op.and]) {
-    bool match(Map<dynamic, dynamic> test) {
+    bool match(Map<dynamic, dynamic> testVal) {
+      // iterate all query elements
       keyloop:
       for (dynamic i in query.keys) {
+        // if element is operator -> create fork-matcher
         if (i is Op) {
-          bool match = this._match(query[i], i)(test);
-
+          bool match = this._match(query[i], i)(testVal);
+          // if operator is conjunction and match found -> test next
           if (op == Op.and && match) continue;
+          // if operator is conjunction and no match found -> data does not match
           if (op == Op.and && !match) return false;
 
+          // if operator is disjunction and no match found -> test next
           if (op == Op.or && !match) continue;
+          // if operator is disjunction and matche found -> data does match
           if (op == Op.or && match) return true;
 
+          // if (not-operator and no match) or (not not-operator and match) -> true
+          // else -> false
           return Op.not == op ? !match : match;
         }
 
+        // convert objectdb to string
         if (query[i] is ObjectId) {
           query[i] = query[i].toString();
         }
 
-        var keyPath = i.split('.');
-        dynamic testVal = test;
-        for (dynamic o in keyPath) {
-          if (!(testVal is Map<dynamic, dynamic>) || !testVal.containsKey(o)) {
+        if (!(i is String))
+          throw ObjectDBException("Query key must be string or operator!");
+
+        // split keyPath to array
+        var keyPath = keyPathRegExp.allMatches(i);
+        dynamic testValCopy = testVal;
+        for (var keyPathSegment in keyPath) {
+          var keyPathSegmentAsString = keyPathSegment.group(1);
+
+          // handle list query
+          if (keyPathSegmentAsString == "[]" && testValCopy is List) {
+            var foundMatch = false;
+            var subQuery = {i.substring(keyPathSegment.end): query[i]};
+            // test all list elements for matches
+            for (var testValElement in testValCopy) {
+              if (_match(subQuery, op)(testValElement)) {
+                foundMatch = true;
+              }
+            }
+            if (!foundMatch && op == Op.and) {
+              return false;
+            } else if (foundMatch && op == Op.or) {
+              return true;
+            } else {
+              return foundMatch;
+            }
+          }
+
+          // check if value is map and contains keyPathSegment as key
+          if (!(testValCopy is Map<dynamic, dynamic>) ||
+              !testValCopy.containsKey(keyPathSegmentAsString)) {
             if (op != Op.or) {
               return false;
             } else {
               continue keyloop;
             }
           }
-          testVal = testVal[o];
+          testValCopy = testValCopy[keyPathSegmentAsString];
         }
 
+        // skip if type mismatch
         if (op != Op.inList &&
             op != Op.notInList &&
             (!(query[i] is RegExp) && (op != Op.and && op != Op.or)) &&
-            testVal.runtimeType != query[i].runtimeType) continue;
+            testValCopy.runtimeType != query[i].runtimeType) continue;
 
         switch (op) {
           case Op.and:
           case Op.not:
             {
               if (query[i] is RegExp) {
-                if (!query[i].hasMatch(testVal)) return false;
+                if (!query[i].hasMatch(testValCopy)) return false;
                 break;
               }
-              if (testVal != query[i]) return false;
+              if (testValCopy != query[i]) return false;
               break;
             }
           case Op.or:
             {
               if (query[i] is RegExp) {
-                if (query[i].hasMatch(testVal)) return true;
+                if (query[i].hasMatch(testValCopy)) return true;
                 break;
               }
-              if (testVal == query[i]) return true;
+              if (testValCopy == query[i]) return true;
               break;
             }
           case Op.gt:
             {
-              if (testVal is String) {
-                return testVal.compareTo(query[i]) > 0;
+              if (testValCopy is String) {
+                return testValCopy.compareTo(query[i]) > 0;
               }
-              return testVal > query[i];
+              return testValCopy > query[i];
             }
           case Op.gte:
             {
-              if (testVal is String) {
-                return testVal.compareTo(query[i]) >= 0;
+              if (testValCopy is String) {
+                return testValCopy.compareTo(query[i]) >= 0;
               }
-              return testVal >= query[i];
+              return testValCopy >= query[i];
             }
           case Op.lt:
             {
-              if (testVal is String) {
-                return testVal.compareTo(query[i]) < 0;
+              if (testValCopy is String) {
+                return testValCopy.compareTo(query[i]) < 0;
               }
-              return testVal < query[i];
+              return testValCopy < query[i];
             }
           case Op.lte:
             {
-              if (testVal is String) {
-                return testVal.compareTo(query[i]) <= 0;
+              if (testValCopy is String) {
+                return testValCopy.compareTo(query[i]) <= 0;
               }
-              return testVal <= query[i];
+              return testValCopy <= query[i];
             }
           case Op.ne:
             {
-              return testVal != query[i];
+              return testValCopy != query[i];
             }
           case Op.inList:
             {
-              return (query[i] is List) && query[i].contains(testVal);
+              return (query[i] is List) && query[i].contains(testValCopy);
             }
           case Op.notInList:
             {
-              return (query[i] is List) && !query[i].contains(testVal);
+              return (query[i] is List) && !query[i].contains(testValCopy);
             }
           default:
             {}
         }
       }
 
-      return op == Op.or ? false : true;
+      return op != Op.and ? false : true;
     }
 
     return match;
   }
 
+  /// check all listener and notify matches
   void _push(Method method, dynamic data) {
     listeners.forEach((listener) {
       Function match = _match(listener.query);
@@ -362,7 +466,7 @@ class ObjectDB extends CRUDController {
     });
   }
 
-  // TODO ensure schema or create one
+  /// internal insert
   void _insertData(Map data) {
     if (!data.containsKey('_id')) {
       data['_id'] = ObjectId().toString();
@@ -389,6 +493,7 @@ class ObjectDB extends CRUDController {
     this._data.add(data);
   }
 
+  /// internal remove
   int _removeData(Map<dynamic, dynamic> query) {
     List match =
         this._data.where(this._match(query)).map((doc) => doc['_id']).toList();
@@ -398,68 +503,86 @@ class ObjectDB extends CRUDController {
     return count;
   }
 
+  /// internal update
   int _updateData(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
       bool replace) {
+    // count updated entries
     int count = 0;
+    // create matcher for query
     var matcher = this._match(query);
+    // iterate all data
     for (var i = 0; i < this._data.length; i++) {
+      // skip if query does not match
       if (!matcher(this._data[i])) continue;
       count++;
 
+      // clear entry if replace is true
       if (replace) this._data[i] = Map<dynamic, dynamic>();
 
-      for (var o in changes.keys) {
-        if (o is Op) {
-          for (String p in changes[o].keys) {
+      // apply changes one after another
+      for (var keyOfChanges in changes.keys) {
+        if (keyOfChanges is Op) {
+          for (String p in changes[keyOfChanges].keys) {
             var keyPath = p.split('.');
-            switch (o) {
+            switch (keyOfChanges) {
+              // set value in entry
               case Op.set:
                 {
-                  this._data[i] = updateDeeply(
-                      keyPath, this._data[i], (value) => changes[o][p]);
+                  this._data[i] = updateDeeply(keyPath, this._data[i],
+                      (value) => changes[keyOfChanges][p]);
                   break;
                 }
+              // remove path from entry
               case Op.unset:
                 {
-                  if (changes[o][p] == true) {
+                  if (changes[keyOfChanges][p] == true) {
                     this._data[i] = removeDeeply(keyPath, this._data[i]);
                   }
                   break;
                 }
+              // set max int value
               case Op.max:
                 {
                   this._data[i] = updateDeeply(
                       keyPath,
                       this._data[i],
-                      (value) => value > changes[o][p] ? changes[o][p] : value,
+                      (value) => value > changes[keyOfChanges][p]
+                          ? changes[keyOfChanges][p]
+                          : value,
                       0);
                   break;
                 }
+              // set min int value
               case Op.min:
                 {
                   this._data[i] = updateDeeply(
                       keyPath,
                       this._data[i],
-                      (value) => value < changes[o][p] ? changes[o][p] : value,
+                      (value) => value < changes[keyOfChanges][p]
+                          ? changes[keyOfChanges][p]
+                          : value,
                       0);
                   break;
                 }
+              // increment value at path by x
               case Op.increment:
                 {
                   this._data[i] = updateDeeply(keyPath, this._data[i],
-                      (value) => value += changes[o][p], 0);
+                      (value) => value += changes[keyOfChanges][p], 0);
                   break;
                 }
+              // multiply value at path by x
               case Op.multiply:
                 {
                   this._data[i] = updateDeeply(keyPath, this._data[i],
-                      (value) => value *= changes[o][p], 0);
+                      (value) => value *= changes[keyOfChanges][p], 0);
                   break;
                 }
+              // rename path to new path
               case Op.rename:
                 {
-                  this._data[i] =
-                      renameDeeply(keyPath, changes[o][p], this._data[i]);
+                  this._data[i] = renameDeeply(
+                      keyPath, changes[keyOfChanges][p], this._data[i]);
                   break;
                 }
               default:
@@ -469,7 +592,8 @@ class ObjectDB extends CRUDController {
             }
           }
         } else {
-          this._data[i][o] = changes[o];
+          // set new value
+          this._data[i][keyOfChanges] = changes[keyOfChanges];
         }
       }
       _push(Method.update, this._data[i]);
@@ -478,7 +602,7 @@ class ObjectDB extends CRUDController {
     return count;
   }
 
-  /// Find data in cached database object
+  /// Find data in in-memory data copy
   Future _find(query, [Filter filter = Filter.all]) async {
     return Future.sync((() {
       var match = this._match(query);
@@ -532,7 +656,7 @@ class ObjectDB extends CRUDController {
         prepared[key] = query[i];
       } else {
         throw ObjectDBException(
-            "query contains invalid data type '${query[i]?.runtimeType}'");
+            "Query contains invalid data type '${query[i]?.runtimeType}'");
       }
     }
     return prepared;
@@ -583,9 +707,9 @@ class ObjectDB extends CRUDController {
     return this._updateData(query, changes, replace);
   }
 
-  /// 'tidy up' .db file
-  Future<ObjectDB> tidy() {
-    return _executionQueue.add<ObjectDB>(() => this._tidy());
+  /// cleanup .db file
+  Future<_ObjectDB> cleanup() {
+    return _executionQueue.add<_ObjectDB>(() => this._cleanup());
   }
 
   /// close db

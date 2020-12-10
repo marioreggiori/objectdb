@@ -134,7 +134,9 @@ void main() async {
     print('remove count ' + removeCount.toString());
   });
 
-  test('operators', () async {});
+  test('operators', () async {
+    // todo
+  });
 
   test('close db', () async {
     db.close();

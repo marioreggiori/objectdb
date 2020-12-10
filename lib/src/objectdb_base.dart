@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
@@ -123,13 +124,16 @@ class _ObjectDB<T> extends CRUDController<T> {
   File _file;
   IOSink _writer;
   // in memory cache
+  Schema _schema;
   List<Map<dynamic, dynamic>> _data;
   // queue for synchronized database operations
   static ExecutionQueue _executionQueue = ExecutionQueue();
   // map operator string values to enum values
   Map<String, Op> _operatorMap = Map();
+
   // database metadata (saved in first line of file)
   Meta _meta = Meta(1, 1);
+  Meta _meta = Meta(1, 1, Schema({}));
   CRUDController crudController;
   // default (empty) onUpgrade handler
   Function onUpgrade = (CRUDController db, int oldVersion) async {
@@ -159,6 +163,10 @@ class _ObjectDB<T> extends CRUDController<T> {
     return _executionQueue
         .add<_ObjectDB>(() => this._open(cleanup))
         .catchError((exception) => Future<_ObjectDB>.error(exception));
+  Future<ObjectDB> open([bool tidy = true]) {
+    return _executionQueue
+        .add<ObjectDB>(() => this._open(tidy))
+        .catchError((exception) => Future<ObjectDB>.error(exception));
   }
 
   Future<_ObjectDB> _open(bool cleanup) async {
@@ -190,11 +198,13 @@ class _ObjectDB<T> extends CRUDController<T> {
         .forEach((line) {
       if (line != '') {
         if (firstLine) {
+          // TODO add schema to meta
           firstLine = false;
           if (line.startsWith("\$objectdb")) {
             // parse meta information from first line if exists
             try {
               _meta = Meta.fromMap(json.decode(line.substring(9)));
+              this._schema = _meta.schema;
               if (_meta.clientVersion != v) {
                 oldVersion = _meta.clientVersion;
                 _meta.clientVersion = v;
@@ -461,6 +471,24 @@ class _ObjectDB<T> extends CRUDController<T> {
     if (!data.containsKey('_id')) {
       data['_id'] = ObjectId().toString();
     }
+
+    if (this._data.length == 0) {
+      // first entry; create a new schema
+      log("creating new schema");
+      this._schema = Schema.fromMap(data);
+      log(this._schema.toString());
+    }
+
+    // try {
+    //   Map schema;
+    //   data.forEach((key, value) {
+    //     schema[key] = value.runtimeType.toString();
+    //   });
+    //   log(schema.toString());
+    // } catch (e) {
+    //   log(e);
+    // }
+
     _push(Method.add, data);
     this._data.add(data);
   }

@@ -13,5 +13,7 @@ ios/Runner/GeneratedPluginRegistrant.*
 
 test/test.db
 test/test.db.bak
-test/shopping_carts.db
-test/shopping_carts.db.bak
+
+example/
+file.db
+file.db.bak

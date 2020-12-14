@@ -15,6 +15,7 @@ If you notice any bugs you can [create](https://github.com/marioreggiori/objectd
 
 - [How to use](#how-to-use)
 - [Flutter](#flutter)
+- [Storage types](#storage-types)
 - [Methods](#methods)
     - [find](#find)
     - [insert](#insert)
@@ -35,8 +36,7 @@ If you notice any bugs you can [create](https://github.com/marioreggiori/objectd
 final path = Directory.current.path + '/my.db';
 
 // create database instance and open
-final db = ObjectDB(path);
-db.open();
+final db = ObjectDB(FileSystemStorage(path));
 
 // insert document into database
 db.insert({'name': {'first': 'Some', 'last': 'Body'}, 'age': 18, 'active': true});
@@ -58,10 +58,24 @@ db.cleanup();
 await db.close();
 ```
 
-## Flutter
-Check out [this](https://github.com/marioreggiori/flutter_examples/tree/master/objectdb) project for flutter-examples.
+## Storage types
 
-Check out [objectdb_flutter](https://github.com/marioreggiori/objectdb_flutter) for reactive store listeners.
+```dart
+// Universal (non-persistent)
+import 'package:objectdb/src/objectdb_storage_in_memory.dart';
+InMemoryStorage();
+
+// Persist on filesystem (Flutter Mobile & Desktop)
+import 'package:objectdb/src/objectdb_storage_filesystem.dart';
+FileSystemStorage();
+
+// Persist in IndexedDB (Flutter Web)
+import 'package:objectdb/src/objectdb_storage_indexeddb.dart';
+IndexedDBStorage(dbName);
+```
+
+## Flutter
+Check out the [example](https://github.com/marioreggiori/objectdb/tree/main/example) project.
 
 ## Methods
 - `Future<ObjectDB> db.open([bool cleanup = true])` opens database
@@ -119,7 +133,7 @@ Check out [objectdb_flutter](https://github.com/marioreggiori/objectdb_flutter) 
 - `increment`, `multiply`: increment/multiply by
 - `unset`: unset key/value
 - `rename`: rename key
-- todo's: `push`
+- todo: `push` / `pull`
 
 ```dart
 {Op.set: {'path.to.key': 'value'}} // set entry['path']['to']['key'] = 'value' (path will be created if not exists)
@@ -154,13 +168,6 @@ var result = db.find({
 // same as
 var match = (result['active'] == true && (['Florida', 'Virginia', 'New Jersey'].contains(result['state']) || result['age'] >= 30));
 ```
-
-## Todo's
-- [x] regex match
-- [ ] encryption
-- [ ] querying arrays
-- [ ] benchmarks
-- [ ] indexing
 
 ## License
 See [License](https://github.com/marioreggiori/objectdb/blob/master/LICENSE)

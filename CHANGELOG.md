@@ -80,3 +80,9 @@
 
 ## [1.1.1] - 2020-12-08
 * Add basic array querying
+
+## [1.2.0-beta] - 2020-03-16
+* Make null-safe
+* Change objectid lib
+* Add additional storage types (now: in-memory, filesystem & indexeddb)
+* Add SchemaDB

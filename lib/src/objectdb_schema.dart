@@ -1,5 +1,5 @@
 class Schema {
-  String id;
+  String? id;
   Schema({this.id});
 
   dynamic operator [](String key) {

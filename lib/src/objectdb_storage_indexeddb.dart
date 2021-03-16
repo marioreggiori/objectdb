@@ -1,0 +1,102 @@
+import 'package:objectdb/src/objectdb_filter.dart';
+import 'package:objectdb/src/objectdb_matcher.dart';
+import 'package:objectdb/src/objectdb_storage_interface.dart';
+import 'package:objectid/src/objectid/objectid.dart';
+import 'package:objectdb/src/objectdb_meta.dart';
+
+import 'dart:indexed_db';
+import 'dart:html';
+
+class IndexedDBStorage extends StorageInterface {
+  final String _name;
+  late final Database _db;
+  IndexedDBStorage(this._name);
+  int _version = 1;
+
+  @override
+  Future<Meta> open([int version = 1]) async {
+    _version = version;
+    _db = await window.indexedDB!.open(_name, version: 1, onUpgradeNeeded: (e) {
+      Database db = e.target.result;
+      if (!db.objectStoreNames!.contains('_')) {
+        db.createObjectStore('_');
+      }
+    });
+
+    var res = await _db
+        .transaction('_', 'readonly')
+        .objectStore('_')
+        .getObject('\$objectdb');
+
+    if (res == null) {
+      await cleanup();
+      return Meta(1);
+    }
+
+    return Meta(res['version']);
+  }
+
+  @override
+  Future close() async {
+    _db.close();
+  }
+
+  @override
+  Future cleanup() async {
+    await _db
+        .transaction('_', 'readwrite')
+        .objectStore('_')
+        .put(Meta(_version).toMap(), '\$objectdb');
+  }
+
+  @override
+  Future<Stream<Map>> find(Map query, [Filter filter = Filter.all]) async {
+    var match = createMatcher(query);
+    var tx = _db.transaction('_', 'readonly');
+    var cur = await tx.objectStore('_').openCursor(autoAdvance: true);
+    var res = cur
+        .where((entry) => entry.key != '\$objectdb' && match(entry.value))
+        .map<Map<dynamic, dynamic>>((entry) => entry.value);
+
+    if (filter == Filter.last) {
+      return Stream.fromIterable([await res.last]);
+    }
+
+    return await res;
+  }
+
+  @override
+  Future<ObjectId> insert(Map data) async {
+    ObjectId _id = ObjectId();
+    data['_id'] = _id.hexString;
+    var tx = _db.transaction('_', 'readwrite');
+    await tx.objectStore('_').add(data, _id.hexString);
+    return _id;
+  }
+
+  @override
+  Future remove(Map query) async {
+    var match = createMatcher(query);
+    var tx = _db.transaction('_', 'readwrite');
+    var cur = await tx.objectStore('_').openCursor(autoAdvance: true);
+    var i = 0;
+    await cur.where((entry) => match(entry.value)).forEach((element) {
+      i++;
+      element.delete();
+    });
+    return i;
+  }
+
+  @override
+  Future update(Map query, Map changes, [bool replace = false]) async {
+    var match = createMatcher(query);
+    var tx = _db.transaction('_', 'readwrite');
+    var cur = await tx.objectStore('_').openCursor(autoAdvance: true);
+    var i = 0;
+    await cur.where((entry) => match(entry.value)).forEach((element) {
+      i++;
+      element.update(applyUpdate(element.value, changes, replace));
+    });
+    return i;
+  }
+}

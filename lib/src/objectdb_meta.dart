@@ -3,26 +3,37 @@ import 'dart:convert';
 /// Structure for database-meta-information stored in first line of db file
 class Meta {
   final int version;
-  int clientVersion;
+  final int clientVersion;
 
-  factory Meta(version, clientVersion) {
-    return Meta.internal(version: version, clientVersion: clientVersion);
+  Meta.internal({required this.version, required this.clientVersion});
+
+  factory Meta(version) {
+    return Meta.internal(version: version, clientVersion: 1);
   }
 
   factory Meta.fromMap(Map<String, dynamic> data) {
-    getKey(String key) {
+    getKey<T>(String key, T unsetValue) {
       if (data.containsKey(key)) return data[key];
-      return null;
+      return unsetValue;
     }
 
     return Meta.internal(
-        version: getKey('version'), clientVersion: getKey('client_version'));
+        version: getKey('version', 1),
+        clientVersion: getKey('client_version', 1));
   }
 
-  Meta.internal({this.version, this.clientVersion});
+  factory Meta.fromString(String meta) {
+    if (!meta.startsWith('\$objectdb'))
+      throw ArgumentError('not a valid meta string');
+    return Meta.fromMap(jsonDecode(meta.substring(9)));
+  }
 
+  Map<String, dynamic> toMap() {
+    return {"version": version, "client_version": clientVersion};
+  }
+
+  @override
   String toString() {
-    return json.encode(
-        {"version": this.version, "client_version": this.clientVersion});
+    return '\$objectdb' + jsonEncode(toMap());
   }
 }

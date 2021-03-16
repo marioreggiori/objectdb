@@ -149,9 +149,9 @@ class _ObjectDB<T> extends CRUDController<T> {
   /// Opens flat file database
   Future<_ObjectDB<T>> _open() => _executionQueue.add<_ObjectDB<T>>(() async {
         _meta = await _storage.open(v);
-        if (onUpgrade != null && _meta.version < v) {
+        if (onUpgrade != null && _meta.clientVersion < v) {
           var controller = UpdateController(_storage);
-          await onUpgrade!(controller, _meta.version);
+          await onUpgrade!(controller, _meta.clientVersion);
           await controller.cleanup();
         }
         return this;

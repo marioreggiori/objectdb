@@ -7,8 +7,8 @@ class Meta {
 
   Meta.internal({required this.version, required this.clientVersion});
 
-  factory Meta(version) {
-    return Meta.internal(version: version, clientVersion: 1);
+  factory Meta(clientVersion) {
+    return Meta.internal(version: 1, clientVersion: clientVersion);
   }
 
   factory Meta.fromMap(Map<String, dynamic> data) {

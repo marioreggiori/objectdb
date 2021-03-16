@@ -33,7 +33,7 @@ class IndexedDBStorage extends StorageInterface {
       return Meta(1);
     }
 
-    return Meta(res['version']);
+    return Meta(res['client_version']);
   }
 
   @override

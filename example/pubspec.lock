@@ -108,7 +108,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.1.1"
+    version: "1.2.0-beta"
   objectid:
     dependency: transitive
     description:

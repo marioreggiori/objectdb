@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:objectdb/objectdb.dart';
 import 'package:objectdb/src/objectdb_storage_indexeddb.dart';
 
+// ignore: import_of_legacy_library_into_null_safe
 import 'package:lipsum/lipsum.dart' as lipsum;
 
 void main() {

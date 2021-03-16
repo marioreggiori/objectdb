@@ -27,7 +27,7 @@ abstract class StorageInterface {
       Map<dynamic, dynamic> entry, Map<dynamic, dynamic> changes,
       [bool replace = false]) {
     // clear entry if replace is true
-    if (replace) entry = Map<dynamic, dynamic>();
+    if (replace) entry = <dynamic, dynamic>{};
 
     // apply changes one after another
     for (var keyOfChanges in changes.keys) {

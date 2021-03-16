@@ -12,7 +12,7 @@ class Meta {
   }
 
   factory Meta.fromMap(Map<String, dynamic> data) {
-    getKey<T>(String key, T unsetValue) {
+    T getKey<T>(String key, T unsetValue) {
       if (data.containsKey(key)) return data[key];
       return unsetValue;
     }
@@ -30,7 +30,7 @@ class Meta {
   }
 
   Map<String, dynamic> toMap() {
-    return {"version": version, "client_version": clientVersion};
+    return {'version': version, 'client_version': clientVersion};
   }
 
   @override

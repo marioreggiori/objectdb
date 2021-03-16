@@ -2,9 +2,9 @@ import 'package:objectdb/src/objectdb_exceptions.dart';
 import 'package:objectdb/src/objectdb_operators.dart';
 import 'package:objectid/objectid.dart';
 
-var keyPathRegExp = RegExp(r"(\w+|\[\w*\])");
+var keyPathRegExp = RegExp(r'(\w+|\[\w*\])');
 
-typedef bool Matcher(Map<dynamic, dynamic> testVal);
+typedef Matcher = bool Function(Map<dynamic, dynamic> testVal);
 
 /// returns matcher for given [query] and optional [op] (recursively)
 Matcher createMatcher(query, [Op op = Op.and]) {
@@ -14,7 +14,7 @@ Matcher createMatcher(query, [Op op = Op.and]) {
     for (dynamic i in query.keys) {
       // if element is operator -> create fork-matcher
       if (i is Op) {
-        bool match = createMatcher(query[i], i)(testVal);
+        var match = createMatcher(query[i], i)(testVal);
         // if operator is conjunction and match found -> test next
         if (op == Op.and && match) continue;
         // if operator is conjunction and no match found -> data does not match
@@ -36,7 +36,7 @@ Matcher createMatcher(query, [Op op = Op.and]) {
       }
 
       if (!(i is String)) {
-        throw ObjectDBException("Query key must be string or operator!");
+        throw ObjectDBException('Query key must be string or operator!');
       }
 
       // split keyPath to array
@@ -46,7 +46,7 @@ Matcher createMatcher(query, [Op op = Op.and]) {
         var keyPathSegmentAsString = keyPathSegment.group(1);
 
         // handle list query
-        if (keyPathSegmentAsString == "[]" && testValCopy is List) {
+        if (keyPathSegmentAsString == '[]' && testValCopy is List) {
           var foundMatch = false;
           var subQuery = {i.substring(keyPathSegment.end): query[i]};
           // test all list elements for matches

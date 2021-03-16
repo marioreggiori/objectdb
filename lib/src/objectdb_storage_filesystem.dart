@@ -10,18 +10,18 @@ import 'package:objectdb/src/objectdb_operators.dart';
 
 import 'objectdb_meta.dart';
 
-var lineRegex = RegExp(r"^([^{]*)({.*)");
+var lineRegex = RegExp(r'^([^{]*)({.*)');
 
 class FileSystemStorage extends StorageInterface {
   late final File _fd;
   late final RandomAccessFile _raf;
   final String _path;
-  final Map<String, Op> _operatorMap = Map();
+  final Map<String, Op> _operatorMap = {};
 
   int _version = 1;
 
   FileSystemStorage(this._path) {
-    _fd = File(this._path);
+    _fd = File(_path);
     Op.values.forEach((Op op) {
       _operatorMap[op.toString()] = op;
     });
@@ -72,7 +72,7 @@ class FileSystemStorage extends StorageInterface {
   @override
   Future<ObjectId> insert(Map data) async {
     await _raf.setPosition(await _raf.length());
-    ObjectId _id = ObjectId();
+    var _id = ObjectId();
     data['_id'] = _id.hexString;
     _raf.writeStringSync(jsonEncode(data) + '\n');
     return _id;
@@ -103,9 +103,9 @@ class FileSystemStorage extends StorageInterface {
   }
 
   Future<Stream<Map<dynamic, dynamic>>> _query(RandomAccessFile raf, Map query,
-      {reversed: false}) async {
+      {reversed = false}) async {
     var match = createMatcher(query);
-    var changes = await _withLineNumber(_readLine())
+    var changes = _withLineNumber(_readLine())
         .where((line) => line.modifier == '~' || line.modifier == '-');
 
     var entries =
@@ -139,7 +139,7 @@ class FileSystemStorage extends StorageInterface {
   }
 
   Stream<_Line> _withLineNumber(Stream<String> lineStream) async* {
-    int nextLine = 0;
+    var nextLine = 0;
     await for (var line in lineStream) {
       var match = lineRegex.firstMatch(line);
       if (match != null) {
@@ -154,7 +154,9 @@ class FileSystemStorage extends StorageInterface {
   Stream<List<int>> _readFile() async* {
     var fileSize = _raf.lengthSync();
     _raf.setPositionSync(0);
-    while (_raf.positionSync() < fileSize) yield _raf.readSync(32);
+    while (_raf.positionSync() < fileSize) {
+      yield _raf.readSync(32);
+    }
   }
 
   ObjectId _getId(Map<dynamic, dynamic> data) =>
@@ -162,21 +164,21 @@ class FileSystemStorage extends StorageInterface {
 
   /// Replace operator enum to corresponding string
   Map _encode(Map query) {
-    Map prepared = Map();
+    var prepared = {};
     for (var i in query.keys) {
       dynamic key = i;
       if (key is Op) {
         key = key.toString();
       }
 
-      prepared[key] = this._encodeValue(query[i]);
+      prepared[key] = _encodeValue(query[i]);
     }
     return prepared;
   }
 
-  _encodeValue(dynamic value) {
+  dynamic _encodeValue(dynamic value) {
     if (value is Map) {
-      return this._encode(value);
+      return _encode(value);
     }
     if (value is String ||
         value is int ||
@@ -193,11 +195,11 @@ class FileSystemStorage extends StorageInterface {
   }
 
   Map _decode(Map query) {
-    Map prepared = Map();
+    var prepared = {};
     for (var i in query.keys) {
       dynamic key = i;
-      if (this._operatorMap.containsKey(key)) {
-        key = this._operatorMap[key];
+      if (_operatorMap.containsKey(key)) {
+        key = _operatorMap[key];
       }
       if (query[i] is Map && query[i].containsKey('\$type')) {
         if (query[i]['\$type'] == 'regex') {
@@ -207,7 +209,7 @@ class FileSystemStorage extends StorageInterface {
       }
 
       if (query[i] is Map) {
-        prepared[key] = this._decode(query[i]);
+        prepared[key] = _decode(query[i]);
       } else if (query[i] is int ||
           query[i] is double ||
           query[i] is bool ||

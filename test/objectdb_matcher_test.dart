@@ -5,8 +5,8 @@ void main() {
   group('query to matcher', () {
     test('simple', () {
       var match = createMatcher({'a': 5, 'b': 2});
-      expect(match({"a": 5, "b": 2}), true);
-      expect(match({"a": 5, "b": 5}), false);
+      expect(match({'a': 5, 'b': 2}), true);
+      expect(match({'a': 5, 'b': 5}), false);
     });
 
     test('nested', () {

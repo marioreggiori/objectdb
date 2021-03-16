@@ -53,7 +53,7 @@ class IndexedDBStorage extends StorageInterface {
   Future<Stream<Map>> find(Map query, [Filter filter = Filter.all]) async {
     var match = createMatcher(query);
     var tx = _db.transaction('_', 'readonly');
-    var cur = await tx.objectStore('_').openCursor(autoAdvance: true);
+    var cur = tx.objectStore('_').openCursor(autoAdvance: true);
     var res = cur
         .where((entry) => entry.key != '\$objectdb' && match(entry.value))
         .map<Map<dynamic, dynamic>>((entry) => entry.value);
@@ -62,12 +62,12 @@ class IndexedDBStorage extends StorageInterface {
       return Stream.fromIterable([await res.last]);
     }
 
-    return await res;
+    return res;
   }
 
   @override
   Future<ObjectId> insert(Map data) async {
-    ObjectId _id = ObjectId();
+    var _id = ObjectId();
     data['_id'] = _id.hexString;
     var tx = _db.transaction('_', 'readwrite');
     await tx.objectStore('_').add(data, _id.hexString);
@@ -78,7 +78,7 @@ class IndexedDBStorage extends StorageInterface {
   Future remove(Map query) async {
     var match = createMatcher(query);
     var tx = _db.transaction('_', 'readwrite');
-    var cur = await tx.objectStore('_').openCursor(autoAdvance: true);
+    var cur = tx.objectStore('_').openCursor(autoAdvance: true);
     var i = 0;
     await cur.where((entry) => match(entry.value)).forEach((element) {
       i++;
@@ -91,7 +91,7 @@ class IndexedDBStorage extends StorageInterface {
   Future update(Map query, Map changes, [bool replace = false]) async {
     var match = createMatcher(query);
     var tx = _db.transaction('_', 'readwrite');
-    var cur = await tx.objectStore('_').openCursor(autoAdvance: true);
+    var cur = tx.objectStore('_').openCursor(autoAdvance: true);
     var i = 0;
     await cur.where((entry) => match(entry.value)).forEach((element) {
       i++;

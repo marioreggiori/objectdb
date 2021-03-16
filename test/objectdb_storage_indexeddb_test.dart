@@ -7,7 +7,7 @@ import 'objectdb_storage.dart' as storage;
 import 'objectdb_upgrade.dart' as upgrade;
 
 void main() async {
-  group('indexeddb crud', storage.testWithAdapter(IndexedDBStorage("test-db")));
+  group('indexeddb crud', storage.testWithAdapter(IndexedDBStorage('test-db')));
   group('indexeddb upgrade',
       upgrade.testWithAdapter(() => IndexedDBStorage('upgrade')));
 }

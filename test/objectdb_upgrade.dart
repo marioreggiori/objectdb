@@ -2,9 +2,9 @@ import 'package:objectdb/objectdb.dart';
 import 'package:objectdb/src/objectdb_storage_interface.dart';
 import 'package:test/test.dart';
 
-typedef void Group();
+typedef Group = void Function();
 
-typedef StorageInterface Creator();
+typedef Creator = StorageInterface Function();
 
 Group testWithAdapter(Creator create) {
   return () {

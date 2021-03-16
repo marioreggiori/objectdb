@@ -10,7 +10,7 @@ import 'package:objectid/objectid.dart';
 typedef SchemaDBItemCreator<S> = S Function(Map<dynamic, dynamic>);
 
 class SchemaDB<T extends Schema> extends _ObjectDB<T> {
-  SchemaDBItemCreator<T> _creator;
+  final SchemaDBItemCreator<T> _creator;
   SchemaDB(storage, this._creator, {version = 1, OnUpgrade? onUpgrade})
       : super(storage, v: version, onUpgrade: onUpgrade);
 
@@ -36,7 +36,8 @@ class ObjectDB extends _ObjectDB<Map<dynamic, dynamic>> {
   Map<dynamic, dynamic> itemToMap(Map<dynamic, dynamic> item) => item;
 }
 
-typedef Future OnUpgrade<T>(UpdateController storage, int oldVersion);
+typedef OnUpgrade<T> = Future Function(
+    UpdateController storage, int oldVersion);
 
 class CRUDController<T> {
   final StorageInterface _storage;
@@ -94,7 +95,7 @@ class CRUDController<T> {
   /// insert many documents
   Future<List<ObjectId>> insertMany(List<T> docs) {
     return _executionQueue.add<List<ObjectId>>(() async {
-      List<ObjectId> _ids = [];
+      var _ids = <ObjectId>[];
       for (var doc in docs) {
         _ids.add(await _storage.insert(itemToMap(doc)));
       }

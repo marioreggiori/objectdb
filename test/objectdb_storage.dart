@@ -5,11 +5,11 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'sample_data.dart' as sample;
 
-typedef void Group();
+typedef Group = void Function();
 
 Group testWithAdapter(StorageInterface adapter) {
   return () {
-    ObjectDB db = ObjectDB(adapter);
+    var db = ObjectDB(adapter);
 
     setUp(() {
       db.remove({});
@@ -25,7 +25,9 @@ Group testWithAdapter(StorageInterface adapter) {
     // test simple update
     test('update', () async {
       var data = await insertSampleData(db);
+      // ignore: unawaited_futures
       db.cleanup();
+      // ignore: unawaited_futures
       db.update({
         Op.gte: {
           'age': 43,
@@ -48,6 +50,7 @@ Group testWithAdapter(StorageInterface adapter) {
     test('delete', () async {
       var data = await insertSampleData(db);
 
+      // ignore: unawaited_futures
       db.remove({'newsletter': false});
       data.removeWhere((element) => !element['newsletter']);
 
@@ -63,15 +66,13 @@ Group testWithAdapter(StorageInterface adapter) {
   };
 }
 
-/**
- *
- *
- *
- *
- *
- *
- * HELPER
- */
+///
+///
+///
+///
+///
+///
+/// HELPER
 
 Function deepEq = const DeepCollectionEquality.unordered().equals;
 

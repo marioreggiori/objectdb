@@ -47,6 +47,7 @@ class FileSystemStorage extends StorageInterface {
     await for (var entry in await find({})) {
       writer.writeln(jsonEncode(entry));
     }
+    await writer.close();
     File(_path).deleteSync();
     nextFile.renameSync(_path);
   }

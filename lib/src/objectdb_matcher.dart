@@ -35,8 +35,9 @@ Matcher createMatcher(query, [Op op = Op.and]) {
         query[i] = (query[i] as ObjectId).hexString;
       }
 
-      if (!(i is String))
+      if (!(i is String)) {
         throw ObjectDBException("Query key must be string or operator!");
+      }
 
       // split keyPath to array
       var keyPath = keyPathRegExp.allMatches(i);

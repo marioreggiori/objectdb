@@ -60,8 +60,8 @@ class CRUDController<T> {
       if (listener != null) {
         _listeners.add(Listener(query, listener));
       }
-      return _executionQueue.add<List<T>>(
-          () async => (await _storage.find(query)).map<T>(createItem).toList());
+      return _executionQueue.add<List<T>>(() async =>
+          await (await _storage.find(query)).map<T>(createItem).toList());
     } catch (e) {
       rethrow;
     }
@@ -88,9 +88,8 @@ class CRUDController<T> {
   }
 
   /// insert document
-  Future<ObjectId> insert(T doc) {
-    return _executionQueue.add<ObjectId>(() => _storage.insert(itemToMap(doc)));
-  }
+  Future<ObjectId> insert(T doc) =>
+      _executionQueue.add<ObjectId>(() => _storage.insert(itemToMap(doc)));
 
   /// insert many documents
   Future<List<ObjectId>> insertMany(List<T> docs) {
@@ -104,10 +103,8 @@ class CRUDController<T> {
   }
 
   /// remove documents that match [query]
-  Future<int> remove(query) {
-    // todo: count
-    return _executionQueue.add<int>(() => _storage.remove(query));
-  }
+  Future<int> remove(query) =>
+      _executionQueue.add<int>(() => _storage.remove(query));
 
   /// update database, takes [query], [changes] and an optional [replace] flag
   Future<int> update(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
@@ -116,9 +113,9 @@ class CRUDController<T> {
         .add<int>(() => _storage.update(query, changes, replace));
   }
 
-  Future cleanup() {
-    return _executionQueue.add(_storage.cleanup);
-  }
+  Future cleanup() => _executionQueue.add(_storage.cleanup);
+
+  Future wait() => _executionQueue.add(() async {});
 }
 
 class UpdateController extends CRUDController<Map<dynamic, dynamic>> {
@@ -143,19 +140,18 @@ class _ObjectDB<T> extends CRUDController<T> {
   OnUpgrade<T>? onUpgrade;
 
   _ObjectDB(storage, {this.v = 1, this.onUpgrade}) : super(storage) {
-    _open();
+    _executionQueue.add(_open);
   }
 
   /// Opens flat file database
-  Future<_ObjectDB<T>> _open() => _executionQueue.add<_ObjectDB<T>>(() async {
-        _meta = await _storage.open(v);
-        if (onUpgrade != null && _meta.clientVersion < v) {
-          var controller = UpdateController(_storage);
-          await onUpgrade!(controller, _meta.clientVersion);
-          await controller.cleanup();
-        }
-        return this;
-      });
+  Future _open() async {
+    _meta = await _storage.open(v);
+    if (onUpgrade != null && _meta.clientVersion < v) {
+      var controller = UpdateController(_storage);
+      await onUpgrade!(controller, _meta.clientVersion);
+      await controller.cleanup();
+    }
+  }
 
   /// close db
   Future close() => _executionQueue.add(_storage.close);

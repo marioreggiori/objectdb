@@ -86,3 +86,6 @@
 * Change objectid lib
 * Add additional storage types (now: in-memory, filesystem & indexeddb)
 * Add SchemaDB
+
+## [1.2.0-beta+2] - 2020-03-16
+* Fix race condition

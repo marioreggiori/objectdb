@@ -23,8 +23,9 @@ class Meta {
   }
 
   factory Meta.fromString(String meta) {
-    if (!meta.startsWith('\$objectdb'))
+    if (!meta.startsWith('\$objectdb')) {
       throw ArgumentError('not a valid meta string');
+    }
     return Meta.fromMap(jsonDecode(meta.substring(9)));
   }
 

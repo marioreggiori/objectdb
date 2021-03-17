@@ -7,6 +7,7 @@ import 'package:objectdb/src/objectdb_meta.dart';
 import 'dart:indexed_db';
 import 'dart:html';
 
+/// Stores data in indexeddb (browser only)
 class IndexedDBStorage extends StorageInterface {
   final String _name;
   late final Database _db;

@@ -9,6 +9,7 @@ import 'package:objectid/objectid.dart';
 
 typedef SchemaDBItemCreator<S> = S Function(Map<dynamic, dynamic>);
 
+/// SchemaDB
 class SchemaDB<T extends Schema> extends _ObjectDB<T> {
   final SchemaDBItemCreator<T> _creator;
   SchemaDB(storage, this._creator, {version = 1, OnUpgrade? onUpgrade})
@@ -25,6 +26,7 @@ class SchemaDB<T extends Schema> extends _ObjectDB<T> {
   Map<dynamic, dynamic> itemToMap(T item) => item.toMapWithId();
 }
 
+/// ObjectDB
 class ObjectDB extends _ObjectDB<Map<dynamic, dynamic>> {
   ObjectDB(storage, {version = 1, OnUpgrade? onUpgrade})
       : super(storage, v: version, onUpgrade: onUpgrade);
@@ -39,17 +41,19 @@ class ObjectDB extends _ObjectDB<Map<dynamic, dynamic>> {
 typedef OnUpgrade<T> = Future Function(
     UpdateController storage, int oldVersion);
 
-class CRUDController<T> {
+abstract class CRUDController<T> {
   final StorageInterface _storage;
   final ExecutionQueue _executionQueue = ExecutionQueue();
   final List<Listener> _listeners = [];
 
   CRUDController(this._storage);
 
+  /// convert dynamic map to concrete type T (opposite of itemToMap)
   T createItem(Map<dynamic, dynamic> data) {
     throw UnimplementedError();
   }
 
+  /// convert concrete type T to dynamic map (opposite of createItem)
   Map<dynamic, dynamic> itemToMap(T item) {
     throw UnimplementedError();
   }
@@ -114,8 +118,10 @@ class CRUDController<T> {
         .add<int>(() => _storage.update(query, changes, replace));
   }
 
+  /// trigger storage cleanup (f.e. condense storage file)
   Future cleanup() => _executionQueue.add(_storage.cleanup);
 
+  /// returns future to await all previous db actions
   Future wait() => _executionQueue.add(() async {});
 }
 

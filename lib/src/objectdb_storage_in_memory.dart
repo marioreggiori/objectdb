@@ -4,6 +4,7 @@ import 'package:objectdb/src/objectdb_matcher.dart';
 import 'package:objectid/objectid.dart';
 import 'package:objectdb/src/objectdb_storage_interface.dart';
 
+/// Stores data in-memory
 class InMemoryStorage extends StorageInterface {
   final List<Map<dynamic, dynamic>> _data = [];
 

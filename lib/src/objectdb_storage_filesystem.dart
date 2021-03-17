@@ -12,6 +12,7 @@ import 'objectdb_meta.dart';
 
 var lineRegex = RegExp(r'^([^{]*)({.*)');
 
+/// Stores data on file-system (dart:io-envs only)
 class FileSystemStorage extends StorageInterface {
   late final File _fd;
   late final RandomAccessFile _raf;

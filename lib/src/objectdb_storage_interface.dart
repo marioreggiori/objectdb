@@ -6,23 +6,32 @@ import 'package:objectdb/src/objectdb_operators.dart';
 import 'package:objectdb/src/objectdb_meta.dart';
 
 abstract class StorageInterface {
+  /// open/initialize storage
   Future<Meta> open([int version = 1]) async => Meta(version);
 
+  /// close storage
   Future close() async {
     return;
   }
 
+  /// condense storage
   Future cleanup() async {}
 
-  // crud
+  /// insert entry
   Future<ObjectId> insert(Map<dynamic, dynamic> data);
+
+  /// retrieve entries
   Future<Stream<Map<dynamic, dynamic>>> find(Map<dynamic, dynamic> query,
       [Filter filter = Filter.all]);
+
+  /// remove entries
   Future remove(Map<dynamic, dynamic> query);
+
+  /// update entries
   Future update(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
       [bool replace = false]);
 
-  // common methods
+  /// apply update to single entry (internal)
   static Map<dynamic, dynamic> applyUpdate(
       Map<dynamic, dynamic> entry, Map<dynamic, dynamic> changes,
       [bool replace = false]) {

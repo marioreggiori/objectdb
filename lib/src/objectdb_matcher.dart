@@ -14,7 +14,11 @@ Matcher createMatcher(query, [Op op = Op.and]) {
     for (dynamic i in query.keys) {
       // if element is operator -> create fork-matcher
       if (i is Op) {
-        var match = createMatcher(query[i], i)(testVal);
+        var match = createMatcher(query[i], i != Op.not ? i : op)(testVal);
+        if (i == Op.not) {
+          match = !match;
+        }
+
         // if operator is conjunction and match found -> test next
         if (op == Op.and && match) continue;
         // if operator is conjunction and no match found -> data does not match
@@ -24,10 +28,6 @@ Matcher createMatcher(query, [Op op = Op.and]) {
         if (op == Op.or && !match) continue;
         // if operator is disjunction and matche found -> data does match
         if (op == Op.or && match) return true;
-
-        // if (not-operator and no match) or (not not-operator and match) -> true
-        // else -> false
-        return Op.not == op ? !match : match;
       }
 
       // convert objectdb to string
@@ -87,7 +87,7 @@ Matcher createMatcher(query, [Op op = Op.and]) {
         case Op.not:
           {
             if (query[i] is RegExp) {
-              if (!query[i].hasMatch(testValCopy)) return false;
+              if (!query[i].hasMatch(testValCopy.toString())) return false;
               break;
             }
             if (testValCopy != query[i]) return false;
@@ -96,7 +96,7 @@ Matcher createMatcher(query, [Op op = Op.and]) {
         case Op.or:
           {
             if (query[i] is RegExp) {
-              if (query[i].hasMatch(testValCopy)) return true;
+              if (query[i].hasMatch(testValCopy.toString())) return true;
               break;
             }
             if (testValCopy == query[i]) return true;

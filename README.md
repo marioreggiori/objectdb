@@ -75,11 +75,10 @@ IndexedDBStorage(dbName);
 ```
 
 ## Flutter
-Check out the [example](https://github.com/marioreggiori/objectdb/tree/main/example) project.
+Check out the [example](https://github.com/marioreggiori/objectdb/blob/main/example/lib/main.dart) project.
 
 ## Methods
-- `Future<ObjectDB> db.open([bool cleanup = true])` opens database
-- `Future<void> db.cleanup()` cleanup the .db file
+- `Future<void> db.cleanup()` cleanup the db file
 - `Future<void> db.close()` closes database (should be awaited to ensure all queries have been executed)
 
 ### find

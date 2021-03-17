@@ -129,7 +129,7 @@ class FileSystemStorage extends StorageInterface {
           } else if (change.modifier == '~') {
             var match = createMatcher(_decode(change.content['q']));
             if (!match(entry.content)) continue;
-            entry.content = applyUpdate(entry.content,
+            entry.content = StorageInterface.applyUpdate(entry.content,
                 _decode(change.content['c']), change.content['r']);
           }
         }

@@ -23,7 +23,7 @@ abstract class StorageInterface {
       [bool replace = false]);
 
   // common methods
-  Map<dynamic, dynamic> applyUpdate(
+  static Map<dynamic, dynamic> applyUpdate(
       Map<dynamic, dynamic> entry, Map<dynamic, dynamic> changes,
       [bool replace = false]) {
     // clear entry if replace is true

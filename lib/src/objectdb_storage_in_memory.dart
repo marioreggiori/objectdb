@@ -56,7 +56,7 @@ class InMemoryStorage extends StorageInterface {
       if (!matcher(_data[i])) continue;
       count++;
 
-      _data[i] = applyUpdate(_data[i], changes, replace);
+      _data[i] = StorageInterface.applyUpdate(_data[i], changes, replace);
     }
 
     return count;

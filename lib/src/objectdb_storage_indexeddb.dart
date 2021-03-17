@@ -95,7 +95,8 @@ class IndexedDBStorage extends StorageInterface {
     var i = 0;
     await cur.where((entry) => match(entry.value)).forEach((element) {
       i++;
-      element.update(applyUpdate(element.value, changes, replace));
+      element.update(
+          StorageInterface.applyUpdate(element.value, changes, replace));
     });
     return i;
   }

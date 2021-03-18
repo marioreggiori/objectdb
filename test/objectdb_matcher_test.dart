@@ -220,4 +220,38 @@ void main() {
     expect(match({'test': 5}), false);
     expect(match({}), false);
   });
+
+  test('complex query', () {
+    var match = createMatcher({
+      Op.and: {
+        'name': RegExp(r'^pizza', caseSensitive: false),
+        Op.or: {
+          'ingredients[]name': 'tomato',
+          Op.gt: {'weight': 250},
+        }
+      }
+    });
+
+    expect(
+        match({
+          'name': 'Pizza sauce',
+          'ingredients': [
+            {'name': 'tomato'},
+            {'name': 'basil'},
+          ],
+          'weight': 200,
+        }),
+        true);
+
+    expect(
+        match({
+          'name': 'Pizza dough',
+          'ingredients': [
+            {'name': 'flour'},
+            {'name': 'salt'},
+          ],
+          'weight': 500,
+        }),
+        true);
+  });
 }

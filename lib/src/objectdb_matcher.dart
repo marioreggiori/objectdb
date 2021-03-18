@@ -60,7 +60,7 @@ Matcher createMatcher(query, [Op op = Op.and]) {
           } else if (foundMatch && op == Op.or) {
             return true;
           } else {
-            return foundMatch;
+            continue keyloop;
           }
         }
 

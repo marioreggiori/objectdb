@@ -3,49 +3,11 @@ import 'package:objectdb/src/objectdb_matcher.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('query to matcher', () {
-    test('simple', () {
-      var match = createMatcher({'a': 5, 'b': 2});
-      expect(match({'a': 5, 'b': 2}), true);
-      expect(match({'a': 5, 'b': 5}), false);
-    });
-
-    test('nested', () {
-      var match = createMatcher({'a.b': 4, 'a.c.d.e': 5});
-      expect(
-          match({
-            'a': {
-              'b': 4,
-              'c': {
-                'd': {'e': 5}
-              }
-            }
-          }),
-          true);
-
-      expect(
-          match({
-            'a': {
-              'b': 4,
-              'c': {'d': 'test'}
-            }
-          }),
-          false);
-    });
+  test('simple', () {
+    var match = createMatcher({'a': 5, 'b': 2});
+    expect(match({'a': 5, 'b': 2}), true);
+    expect(match({'a': 5, 'b': 5}), false);
   });
-
-  test('regex', () {
-    var match = createMatcher({
-      'test': RegExp(
-          r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
-    });
-
-    expect(match({'test': '10.2.1.0'}), true);
-    expect(match({'test': '10.2.1.300'}), false);
-    expect(match({'test': 5}), false);
-    expect(match({}), false);
-  });
-
   group('operator', () {
     group('logical', () {
       test('and', () {
@@ -198,5 +160,64 @@ void main() {
     });
   });
 
-  test('array', () {});
+  test('array', () {
+    var match = createMatcher({'ingredients[]name': 'tomato'});
+
+    expect(
+        match({
+          'ingredients': [
+            {'name': 'tomato'},
+            {'name': 'basil'},
+          ]
+        }),
+        true);
+
+    expect(
+        match({
+          'ingredients': [
+            {'name': 'flour'},
+            {'name': 'sugar'},
+          ]
+        }),
+        false);
+
+    expect(match({'test': 'test'}), false);
+    expect(match({'ingredients': 'test'}), false);
+    expect(match({}), false);
+  });
+
+  test('nested', () {
+    var match = createMatcher({'a.b': 4, 'a.c.d.e': 5});
+    expect(
+        match({
+          'a': {
+            'b': 4,
+            'c': {
+              'd': {'e': 5}
+            }
+          }
+        }),
+        true);
+
+    expect(
+        match({
+          'a': {
+            'b': 4,
+            'c': {'d': 'test'}
+          }
+        }),
+        false);
+  });
+
+  test('regex', () {
+    var match = createMatcher({
+      'test': RegExp(
+          r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
+    });
+
+    expect(match({'test': '10.2.1.0'}), true);
+    expect(match({'test': '10.2.1.300'}), false);
+    expect(match({'test': 5}), false);
+    expect(match({}), false);
+  });
 }

@@ -5,6 +5,13 @@ import 'package:objectdb/src/objectdb_operators.dart';
 
 import 'package:objectdb/src/objectdb_meta.dart';
 
+dynamic ifNum(Function fun) {
+  return (dynamic val) {
+    if (val is! num) return val;
+    return fun(val);
+  };
+}
+
 abstract class StorageInterface {
   /// open/initialize storage
   Future<Meta> open([int version = 1]) async => Meta(version);
@@ -65,9 +72,9 @@ abstract class StorageInterface {
                 entry = updateDeeply(
                     keyPath,
                     entry,
-                    (value) => value > changes[keyOfChanges][p]
+                    ifNum((value) => value > changes[keyOfChanges][p]
                         ? changes[keyOfChanges][p]
-                        : value,
+                        : value),
                     0);
                 break;
               }
@@ -77,9 +84,9 @@ abstract class StorageInterface {
                 entry = updateDeeply(
                     keyPath,
                     entry,
-                    (value) => value < changes[keyOfChanges][p]
+                    ifNum((value) => value < changes[keyOfChanges][p]
                         ? changes[keyOfChanges][p]
-                        : value,
+                        : value),
                     0);
                 break;
               }
@@ -87,14 +94,14 @@ abstract class StorageInterface {
             case Op.increment:
               {
                 entry = updateDeeply(keyPath, entry,
-                    (value) => value += changes[keyOfChanges][p], 0);
+                    ifNum((value) => value += changes[keyOfChanges][p]), 0);
                 break;
               }
             // multiply value at path by x
             case Op.multiply:
               {
                 entry = updateDeeply(keyPath, entry,
-                    (value) => value *= changes[keyOfChanges][p], 0);
+                    ifNum((value) => value *= changes[keyOfChanges][p]), 0);
                 break;
               }
             // rename path to new path

@@ -92,3 +92,7 @@
 
 ## [1.2.1] - 2020-03-18
 * Fix some bugs
+
+## [1.2.1+1] - 2021-06-07
+* Fix update with null (FileSystemAdapter)
+* Make ArgumentError more verbose

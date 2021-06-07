@@ -34,11 +34,13 @@ Group testWithAdapter(StorageInterface adapter) {
         }
       }, {
         'newsletter': false,
+        'null': null,
       });
 
       data = data.map((e) {
         if (e['age'] >= 43) {
           e['newsletter'] = false;
+          e['null'] = null;
         }
         return e;
       }).toList();

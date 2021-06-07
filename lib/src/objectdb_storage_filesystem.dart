@@ -185,14 +185,15 @@ class FileSystemStorage extends StorageInterface {
         value is int ||
         value is double ||
         value is bool ||
-        value is List) {
+        value is List ||
+        value == null) {
       return value;
     }
     if (value is RegExp) {
       return {'\$type': 'regex', 'pattern': value.pattern};
     }
 
-    throw ArgumentError();
+    throw ArgumentError("Value has invalid data type '${value.runtimeType}'");
   }
 
   Map _decode(Map query) {

@@ -76,7 +76,7 @@ class IndexedDBStorage extends StorageInterface {
   }
 
   @override
-  Future remove(Map query) async {
+  Future<int> remove(Map query) async {
     var match = createMatcher(query);
     var tx = _db.transaction('_', 'readwrite');
     var cur = tx.objectStore('_').openCursor(autoAdvance: true);
@@ -100,5 +100,22 @@ class IndexedDBStorage extends StorageInterface {
           StorageInterface.applyUpdate(element.value, changes, replace));
     });
     return i;
+  }
+
+  @override
+  Future<ObjectId?> save(Map query, Map changesOrData) async {
+    var match = createMatcher(query);
+    var tx = _db.transaction('_', 'readwrite');
+    var cur = tx.objectStore('_').openCursor(autoAdvance: true);
+    var list = await cur.where((entry) => match(entry.value)).toList();
+    if (list.isEmpty) {
+      return insert(changesOrData);
+    } else if (list.length == 1) {
+      await list.first.update(
+          StorageInterface.applyUpdate(list.first.value, changesOrData, true));
+      return list.first.value;
+    } else {
+      return null;
+    }
   }
 }

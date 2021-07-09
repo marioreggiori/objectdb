@@ -107,15 +107,25 @@ abstract class CRUDController<T> {
     });
   }
 
-  /// remove documents that match [query]
+  /// remove documents that match [query]. Returns the number of removed documents.
   Future<int> remove(query) =>
       _executionQueue.add<int>(() => _storage.remove(query));
 
-  /// update database, takes [query], [changes] and an optional [replace] flag
+  /// update database, takes [query], [changes] and an optional [replace] flag. If [replace] is true the existing entry will be ignored
+  /// and only the properties of the new entry will be saved. Otherwise the properties of the new entry overwrites the properties with
+  /// the same name of the existing entry keeping unspecified properties of the existing entry.
   Future<int> update(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
       [bool replace = false]) {
     return _executionQueue
         .add<int>(() => _storage.update(query, changes, replace));
+  }
+
+  /// Inserts or updates a doc. The method first searches by the given [query]. If no entry is found a new item is created. If exactly
+  /// one entry is found the entry will be replaced by the given [doc]. If more than one entries are found the method does nothing and
+  /// returns [null]
+  Future<ObjectId?> save(Map<dynamic, dynamic> query, T doc) {
+    return _executionQueue
+        .add<ObjectId?>(() => _storage.save(query, itemToMap(doc)));
   }
 
   /// trigger storage cleanup (f.e. condense storage file)

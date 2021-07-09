@@ -32,11 +32,17 @@ abstract class StorageInterface {
       [Filter filter = Filter.all]);
 
   /// remove entries
-  Future remove(Map<dynamic, dynamic> query);
+  Future<int> remove(Map<dynamic, dynamic> query);
 
   /// update entries
   Future update(Map<dynamic, dynamic> query, Map<dynamic, dynamic> changes,
       [bool replace = false]);
+
+  /// Replaces the existing object or inserts a new one if the query does not find an entry. Returns the ObjectId of the newly
+  /// inserted object or the objectId of the replaced object or [null] if the query returns more than 1 entry. In the latter case the
+  /// method does not change any data.
+  Future<ObjectId?> save(
+      Map<dynamic, dynamic> query, Map<dynamic, dynamic> changesOrData);
 
   /// apply update to single entry (internal)
   static Map<dynamic, dynamic> applyUpdate(

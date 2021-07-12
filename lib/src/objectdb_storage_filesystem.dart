@@ -104,8 +104,14 @@ class FileSystemStorage extends StorageInterface {
         .toList();
     // wait for the items before writing the changes to [_raf]
     var result = await matches;
+    // no old item found, we cannot update anything.
+    if (result.isEmpty) return 0;
+    if (replace && result.length > 1) {
+      // more than one item found but we should replace everything, we cannot do because of missing unique _id
+      return 0;
+    }
     // set the id if replace is true
-    if (replace) {
+    if (replace && result.length == 1) {
       changes['_id'] = result.first.hexString;
     }
     _raf!.writeStringSync(_toChange(

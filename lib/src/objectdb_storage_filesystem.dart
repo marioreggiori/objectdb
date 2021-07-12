@@ -104,6 +104,10 @@ class FileSystemStorage extends StorageInterface {
         .toList();
     // wait for the items before writing the changes to [_raf]
     var result = await matches;
+    // set the id if replace is true
+    if (replace) {
+      changes['_id'] = result.first.hexString;
+    }
     _raf!.writeStringSync(_toChange(
         '~', {'q': _encode(query), 'c': _encode(changes), 'r': replace}));
     return result.length;
@@ -117,7 +121,7 @@ class FileSystemStorage extends StorageInterface {
     // wait for the items before writing the changes to [_raf]
     var result = await matches;
     if (result.isEmpty) {
-      return insert(changesOrData);
+      return await insert(changesOrData);
     } else if (result.length == 1) {
       changesOrData['_id'] = result.first.hexString;
       _raf!.writeStringSync(_toChange(

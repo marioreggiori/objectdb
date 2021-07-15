@@ -15,7 +15,7 @@ var lineRegex = RegExp(r'^([^{]*)({.*)');
 /// Stores data on file-system (dart:io-envs only)
 class FileSystemStorage extends StorageInterface {
   late final File _fd;
-  late final RandomAccessFile _raf;
+  RandomAccessFile? _raf;
   final String _path;
   final Map<String, Op> _operatorMap = {};
 
@@ -32,7 +32,7 @@ class FileSystemStorage extends StorageInterface {
   Future<Meta> open([int version = 1]) async {
     _version = version;
     _raf = _fd.openSync(mode: FileMode.append);
-    if (_raf.lengthSync() > 0) {
+    if (_raf!.lengthSync() > 0) {
       var firstLine = await _readLine().first;
       if (firstLine.startsWith('\$objectdb')) return Meta.fromString(firstLine);
     }
@@ -49,13 +49,19 @@ class FileSystemStorage extends StorageInterface {
       writer.writeln(jsonEncode(entry));
     }
     await writer.close();
+    // close _raf so that we can delete the file
+    await close();
+
     File(_path).deleteSync();
     nextFile.renameSync(_path);
+
+    // reopen raf
+    await (open());
   }
 
   @override
   Future close() async {
-    await _raf.close();
+    await _raf?.close();
   }
 
   @override
@@ -64,39 +70,72 @@ class FileSystemStorage extends StorageInterface {
     switch (filter) {
       case Filter.all:
       case Filter.first:
-        return await _query(_raf, query);
+        return await _query(_raf!, query);
       case Filter.last:
-        return await _query(_raf, query, reversed: true);
+        return await _query(_raf!, query, reversed: true);
     }
   }
 
   @override
   Future<ObjectId> insert(Map data) async {
-    await _raf.setPosition(await _raf.length());
+    await _raf!.setPosition(await _raf!.length());
     var _id = ObjectId();
     data['_id'] = _id.hexString;
-    _raf.writeStringSync(jsonEncode(data) + '\n');
+    _raf!.writeStringSync(jsonEncode(data) + '\n');
     return _id;
   }
 
   @override
-  Future remove(Map query) async {
-    var matches = (await _query(_raf, query, reversed: true))
-        .map<ObjectId>(_getId)
-        .toList();
+  Future<int> remove(Map query) async {
+    var stream = await _query(_raf!, query);
+    var matches = stream.map<ObjectId>(_getId).toList();
+    // wait for the items before writing the changes to [_raf]
+    var result = await matches;
 
-    _raf.writeStringSync(_toChange('-', _encode(query)));
-    return (await matches).length;
+    _raf!.writeStringSync(_toChange('-', _encode(query)));
+
+    return result.length;
   }
 
   @override
-  Future update(Map query, Map changes, [bool replace = false]) async {
-    var matches = (await _query(_raf, query, reversed: true))
+  Future<int> update(Map query, Map changes, [bool replace = false]) async {
+    var matches = (await _query(_raf!, query, reversed: true))
         .map<ObjectId>(_getId)
         .toList();
-    _raf.writeStringSync(_toChange(
+    // wait for the items before writing the changes to [_raf]
+    var result = await matches;
+    // no old item found, we cannot update anything.
+    if (result.isEmpty) return 0;
+    if (replace && result.length > 1) {
+      // more than one item found but we should replace everything, we cannot do because of missing unique _id
+      return 0;
+    }
+    // set the id if replace is true
+    if (replace && result.length == 1) {
+      changes['_id'] = result.first.hexString;
+    }
+    _raf!.writeStringSync(_toChange(
         '~', {'q': _encode(query), 'c': _encode(changes), 'r': replace}));
-    return (await matches).length;
+    return result.length;
+  }
+
+  @override
+  Future<ObjectId?> save(Map query, Map changesOrData) async {
+    var matches = (await _query(_raf!, query, reversed: true))
+        .map<ObjectId>(_getId)
+        .toList();
+    // wait for the items before writing the changes to [_raf]
+    var result = await matches;
+    if (result.isEmpty) {
+      return await insert(changesOrData);
+    } else if (result.length == 1) {
+      changesOrData['_id'] = result.first.hexString;
+      _raf!.writeStringSync(_toChange(
+          '~', {'q': _encode(query), 'c': _encode(changesOrData), 'r': true}));
+      return result.first;
+    } else {
+      return null;
+    }
   }
 
   String _toChange(String type, Map content) {
@@ -153,10 +192,10 @@ class FileSystemStorage extends StorageInterface {
       _readFile().transform(utf8.decoder).transform(LineSplitter());
 
   Stream<List<int>> _readFile() async* {
-    var fileSize = _raf.lengthSync();
-    _raf.setPositionSync(0);
-    while (_raf.positionSync() < fileSize) {
-      yield _raf.readSync(32);
+    var fileSize = _raf!.lengthSync();
+    _raf!.setPositionSync(0);
+    while (_raf!.positionSync() < fileSize) {
+      yield _raf!.readSync(32);
     }
   }
 

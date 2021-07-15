@@ -36,12 +36,12 @@ class InMemoryStorage extends StorageInterface {
   }
 
   @override
-  Future remove(Map query) async {
-    var match =
-        _data.where(createMatcher(query)).map((doc) => doc['_id']).toList();
+  Future<int> remove(Map query) async {
+    var matcher = createMatcher(query);
+    var match = _data.where(matcher).map((doc) => doc['_id']).toList();
 
     var count = match.length;
-    _data.removeWhere(createMatcher(query));
+    _data.removeWhere(matcher);
     return count;
   }
 
@@ -61,5 +61,22 @@ class InMemoryStorage extends StorageInterface {
     }
 
     return count;
+  }
+
+  @override
+  Future<ObjectId?> save(Map query, Map changesOrData) {
+    var matcher = createMatcher(query);
+    var toUpdate = _data.where((element) => matcher(element)).toList();
+    if (toUpdate.isEmpty) {
+      return insert(changesOrData);
+    } else if (toUpdate.length == 1) {
+      toUpdate.forEach((element) {
+        changesOrData['_id'] = element['_id'];
+        StorageInterface.applyUpdate(element, changesOrData, true);
+      });
+      return Future.value(ObjectId.fromHexString(toUpdate.first['_id']));
+    } else {
+      return Future.value(null);
+    }
   }
 }

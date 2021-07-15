@@ -11,8 +11,59 @@ Group testWithAdapter(StorageInterface adapter) {
   return () {
     var db = ObjectDB(adapter);
 
-    setUp(() {
-      db.remove({});
+    setUp(() async {
+      await db.remove({});
+    });
+
+    test('saveInsert', () async {
+      var data = await insertSampleData(db);
+      var objectId = await db.save({
+        Op.and: {
+          'age': 111,
+        }
+      }, {
+        'name': 'saveTest',
+        'newsletter': false,
+        'age': 111,
+      });
+      expect(objectId, isNotNull);
+
+      expect((await db.find({'age': 111})).length, equals(1));
+    });
+
+    test('saveUpdate', () async {
+      var data = await insertSampleData(db);
+      var objectId1 = await db.insert({
+        'name': 'saveTest',
+        'newsletter': false,
+        'age': 111,
+      });
+      var objectId = await db.save({
+        Op.and: {
+          'age': 111,
+        }
+      }, {
+        'name': 'saveUpdateTest',
+        'newsletter': true,
+        'age': 111,
+      });
+      expect(objectId, isNotNull);
+
+      // expect((await db.find({'age': 111})).length, equals(1));
+    });
+
+    test('saveUpdateFail', () async {
+      var data = await insertSampleData(db);
+      var objectId = await db.save({
+        Op.and: {
+          'newsletter': false,
+        }
+      }, {
+        'name': 'saveTest',
+        'newsletter': false,
+        'age': 111,
+      });
+      expect(objectId, isNull);
     });
 
     // test simple insert
@@ -53,7 +104,11 @@ Group testWithAdapter(StorageInterface adapter) {
       var data = await insertSampleData(db);
 
       // ignore: unawaited_futures
-      db.remove({'newsletter': false});
+      List list = await db.find({'newsletter': false});
+      expect(list.length, greaterThan(0));
+
+      var count = await db.remove({'newsletter': false});
+      expect(count, equals(list.length));
       data.removeWhere((element) => !element['newsletter']);
 
       expect(deepEq(data, await db.find()), true);
